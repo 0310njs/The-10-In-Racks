@@ -1,12 +1,27 @@
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
 rack_height = 1.0; // [0.5:0.5:5]
-
-component_width = 110.0;
-component_depth = 122.0;
-component_height = 28.30;
-component_offset = 0;  // [-100:0.1:100]
-
+// ========================================
+/* [Component1] */
+component1 = true;
+component1_width = 110.0;
+component1_depth = 122.0;
+component1_height = 28.30;
+component1_offset = 0;  // [-100:0.1:100]
+// ========================================
+/* [Component2] */
+component2 = true;
+component2_width = 110.0;
+component2_depth = 122.0;
+component2_height = 28.30;
+component2_offset = 0;  // [-100:0.1:100]
+// ========================================
+/* [Component3] */
+component3 = true;
+component3_width = 110.0;
+component3_depth = 122.0;
+component3_height = 28.30;
+component3_offset = 0;  // [-100:0.1:100]
 // ========================================
 /* [Keystones] */
 // Add keystone jacks to the front panel
@@ -43,55 +58,33 @@ tolerance = 0.42;
 // ========================================
 /* [Hidden] */
 height = 44.45 * rack_height;
-
-
-// The main module containing all internal variables
-module switch_mount(switch_width, switch_height, switch_depth) {
-    //6 inch racks (mounts=152.4mm; rails=15.875mm; usable space=120.65mm)
-    //10 inch racks (mounts=254.0mm; rails=15.875mm; usable space=221.5mm)
-    chassis_width = min(switch_width + (2 * case_thickness), (rack_width == 152.4) ? 120.65 : 221.5);
+//ziptie variables
+zip_tie_hole_count = 8;
+zip_tie_hole_width = 1.5;
+zip_tie_hole_length = 5;
+zip_tie_indent_depth = 2;
+zip_tie_cutout_depth = 7;
+// Keystone placement — jack X span (width) goes horizontal, jack Z span (height) goes vertical
+keystone_outer_width  = 19.9; // jack_width + wall = (front_hole_width + wall) + wall
+keystone_outer_height = 27.5; // jack_height + wall
+// Left edge of left keystone pinned to 210/2 from centreline → 210mm outer-to-outer for the mirrored pair
+keystone_tx = rack_width/2 - 105;
+keystone_ty = (height - keystone_outer_height) / 2;
+e=0.01; // epsilon for coplanar face fixes, fixes bug where some faces leave a thin sliver of material
+// ============================================================================
+//End parameters
+// front_panel: used to create Rack panel with mounting holes
+module front_panel(){
+    
     corner_radius = 4.0;
-    chassis_edge_radius = 2.0;
-    tolerance = 0.42;
-
-    zip_tie_hole_count = 8;
-    zip_tie_hole_width = 1.5;
-    zip_tie_hole_length = 5;
-    zip_tie_indent_depth = 2;
-    zip_tie_cutout_depth = 7;
-
-    // When the front is solid the switch slides in from the back, so everything
-    // shifts rearward by front_plate_thickness to keep zip ties at the switch's back face.
-    solid_z_offset = front_plate_hole ? 0 : front_plate_thickness;
-    chassis_depth_main = switch_depth + zip_tie_cutout_depth + solid_z_offset;
-    chassis_depth_indented = chassis_depth_main - zip_tie_indent_depth;
-
-    hole_total_width = zip_tie_hole_count * zip_tie_hole_width;
-    space_between_holes = (rack_width - hole_total_width) / (zip_tie_hole_count + 1);
-
-    $fn = 64;
-
-    // Calculated dimensions
-    cutout_w = switch_width + (2 * tolerance);
-    cutout_h = switch_height + (2 * tolerance);
-    cutout_x = (rack_width - cutout_w) / 2;
-    cutout_y = (height - cutout_h) / 2;
-
-    // Keystone placement — jack X span (width) goes horizontal, jack Z span (height) goes vertical
-    keystone_outer_width  = 19.9; // jack_width + wall = (front_hole_width + wall) + wall
-    keystone_outer_height = 27.5; // jack_height + wall
-    // Left edge of left keystone pinned to 210/2 from centreline → 210mm outer-to-outer for the mirrored pair
-    keystone_tx = rack_width/2 - 105;
-    keystone_ty = (height - keystone_outer_height) / 2;
-
-    // Helper modules
+    
+        // Helper modules
     module capsule_slot_2d(L, H) {
         hull() {
             translate([-L/2 + H/2, 0]) circle(r=H/2);
             translate([L/2 - H/2, 0]) circle(r=H/2);
         }
     }
-    
     module rounded_rect_2d(w, h, r) {
         hull() {
             translate([r, r]) circle(r=r);
@@ -100,68 +93,7 @@ module switch_mount(switch_width, switch_height, switch_depth) {
             translate([r, h-r]) circle(r=r);
         }
     }
-
-    module rounded_chassis_profile(width, height, radius, depth) {
-        hull() {
-            translate([radius, radius, 0]) cylinder(h = depth, r = radius);
-            translate([width - radius, radius, 0]) cylinder(h = depth, r = radius);
-            translate([radius, height - radius, 0]) cylinder(h = depth, r = radius);
-            translate([width - radius, height - radius, 0]) cylinder(h = depth, r = radius);
-        }
-    }
-    
-    // Create the main body as a separate module
-    module main_body() {
-        side_margin = ((rack_width - chassis_width) / 2) + component_offset;
-        chassis_height = min(switch_height + (2 * case_thickness), height);
-        union() {
-            // Front panel
-            linear_extrude(height = front_plate_thickness) {
-                rounded_rect_2d(rack_width, height, corner_radius);
-            }
-            // Chassis body
-            translate([side_margin, (height - chassis_height) / 2, front_plate_thickness]) {
-                rounded_chassis_profile(chassis_width, chassis_height, chassis_edge_radius, chassis_depth_main - front_plate_thickness);
-            }
-        }
-    }
-    
-    // Create switch cutout with optional lip
-    module switch_cutout() {
-        if (front_plate_hole && front_lip) {
-            lip_thickness = 1.2;
-            lip_depth = 0.60;
-            // Main cutout minus lip (centered)
-            translate([
-                ((rack_width - (cutout_w - 2*lip_thickness)) / 2) + component_offset,
-                (height - (cutout_h - 2*lip_thickness)) / 2,
-                -tolerance
-            ]) {
-                cube([cutout_w - 2*lip_thickness, cutout_h - 2*lip_thickness, chassis_depth_main]);
-            }
-            // Switch cutout above the lip (centered)
-            translate([
-                ((rack_width - cutout_w) / 2) + component_offset,
-                (height - cutout_h) / 2,
-                lip_depth
-            ]) {
-                cube([cutout_w, cutout_h, chassis_depth_main]);
-            }
-        } else {
-            // Full cutout: starts at front face when front_plate_hole, or behind front panel when solid
-            z_start = front_plate_hole ? -tolerance : front_plate_thickness;
-            z_depth = front_plate_hole ? chassis_depth_main + 2*tolerance : chassis_depth_main - front_plate_thickness + tolerance;
-            translate([
-                ((rack_width - cutout_w) / 2) + component_offset,
-                (height - cutout_h) / 2,
-                z_start
-            ]) {
-                cube([cutout_w, cutout_h, z_depth]);
-            }
-        }
-    }
-    
-    // Create all rack holes
+        // Create all rack holes
     module all_rack_holes() {
         // Rack standard: 3 holes per U, with specific positioning
         // Each U is 44.45mm, holes are at specific positions within each U
@@ -191,12 +123,12 @@ module switch_mount(switch_width, switch_height, switch_depth) {
                     // Always show holes that are at least partially within the rack height
                     // Always show holes fully inside the rack
                     fully_inside = (hole_y >= slot_height/2 && hole_y <= height - slot_height/2);
-                    // Show partial holes at edge only if half_height_holes is true
+                    // Show partial holes at edge only if half_heighc v v c  t_holes is true
                     partially_inside = (hole_y + slot_height/2 > 0 && hole_y - slot_height/2 < height);
                     show_hole = fully_inside || (half_height_holes && partially_inside && !fully_inside);
                     if (show_hole) {
-                        translate([side_x, hole_y, 0]) {
-                            linear_extrude(height = chassis_depth_main) {
+                        translate([side_x, hole_y, -e]) {
+                            linear_extrude(height = front_plate_thickness + e*2) {
                                 capsule_slot_2d(slot_len, slot_height);
                             }
                         }
@@ -205,45 +137,87 @@ module switch_mount(switch_width, switch_height, switch_depth) {
             }
         }
     }
-
-    // Power wire cutouts: configurable diameter holes at top and bottom rack hole positions
-    module power_wire_cutouts() {
-        mid_y = (height - switch_height) / 2 + switch_height / 2; // Midplane of switch opening
-        hole_spacing_x = switch_width; // match rack holes
-        if (front_wire_hole_left){   //make left hole
-            hole_left_x = (rack_width - hole_spacing_x) / 2 - (wire_diameter /5) + component_offset;
-            translate([hole_left_x, mid_y, 0]) {
-                linear_extrude(height = chassis_depth_main) {circle(d=wire_diameter);}
-            }
+    // Punch the full keystone footprint through the front face plate
+    module keystone_front_cutout() {
+        translate([keystone_tx, keystone_ty, -tolerance]) {
+            cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance]);
         }
-        if (front_wire_hole_right){   //make right hole
-            hole_right_x = (rack_width + hole_spacing_x) / 2 + (wire_diameter /5) + component_offset;
-            translate([hole_right_x, mid_y, 0]) {
-                linear_extrude(height = chassis_depth_main) {circle(d=wire_diameter);}
+    }
+    // Making the plate
+    difference(){
+        linear_extrude(height = front_plate_thickness) {
+            rounded_rect_2d(rack_width, height, corner_radius);
+        }
+        all_rack_holes(); 
+        if (keystones) {
+            if (keystone_left) {      //Cutout for left Keystone
+                keystone_front_cutout();
             }
+            if (keystone_right){     //Cutout for Right Keystone
+                translate([rack_width, 0, 0]) mirror([1, 0, 0])
+                keystone_front_cutout();
+            }
+        } 
+    }
+}
+// component_mount: used to make the soild shape of the holder for each component 
+// with air holes and ziptie modules inside as well.
+module component_mount(component_width, component_height, component_depth, component_offset) {
+    
+    //6 inch racks (mounts=152.4mm; rails=15.875mm; usable space=120.65mm)
+    //10 inch racks (mounts=254.0mm; rails=15.875mm; usable space=221.5mm)
+    chassis_width = min(component_width + (2 * case_thickness), (rack_width == 152.4) ? 120.65 : 221.5);
+    corner_radius = 4.0;
+    chassis_edge_radius = 2.0;
+    tolerance = 0.42;
+
+    // When the front is solid the switch slides in from the back, so everything
+    // shifts rearward by front_plate_thickness to keep zip ties at the switch's back face.
+    solid_z_offset = front_plate_hole ? 0 : front_plate_thickness;
+    chassis_depth_main = component_depth + zip_tie_cutout_depth + solid_z_offset;
+    chassis_depth_indented = chassis_depth_main - zip_tie_indent_depth;
+    hole_total_width = zip_tie_hole_count * zip_tie_hole_width;
+    space_between_holes = (rack_width - hole_total_width) / (zip_tie_hole_count + 1);
+    $fn = 64;
+
+    // Helper module
+    module rounded_chassis_profile(width, height, radius, depth) {
+        hull() {
+            translate([radius, radius, 0]) cylinder(h = depth, r = radius);
+            translate([width - radius, radius, 0]) cylinder(h = depth, r = radius);
+            translate([radius, height - radius, 0]) cylinder(h = depth, r = radius);
+            translate([width - radius, height - radius, 0]) cylinder(h = depth, r = radius);
+        }
+    }
+    // Create the main body as a separate module
+    module body() {
+        side_margin = ((rack_width - chassis_width) / 2) + component_offset;
+        chassis_height = min(component_height + (2 * case_thickness), height);
+        // Chassis body
+        translate([side_margin, (height - chassis_height) / 2, front_plate_thickness]) {
+            rounded_chassis_profile(chassis_width, chassis_height, chassis_edge_radius, chassis_depth_main - front_plate_thickness);   
         }
     }
     // Create zip tie holes and indents
     module zip_tie_features() {
         // Zip tie holes
-        zip_z = switch_depth + solid_z_offset;
+        zip_z = component_depth + solid_z_offset;
         for (i = [0:zip_tie_hole_count-1]) {
-            x_pos = (rack_width - switch_width)/2 + component_offset + (switch_width/(zip_tie_hole_count+1)) * (i+1);
+            x_pos = (rack_width - component_width)/2 + component_offset + (component_width/(zip_tie_hole_count+1)) * (i+1);
             translate([x_pos, 0, zip_z]) {
                 cube([zip_tie_hole_width, height, zip_tie_hole_length]);
             }
         }
-
         // Zip tie indents (top and bottom)
-        x_pos = ((rack_width - switch_width)/2) + component_offset;
-        chassis_height = min(switch_height + (2 * case_thickness), height);
+        x_pos = ((rack_width - component_width)/2) + component_offset;
+        chassis_height = min(component_height + (2 * case_thickness), height);
         // Bottom indent
-        translate([x_pos, (height - chassis_height)/2, zip_z]) {
-            cube([switch_width, zip_tie_indent_depth, zip_tie_cutout_depth]);
+        translate([x_pos, ((height - chassis_height)/2) - e, zip_z]) {
+            cube([component_width, zip_tie_indent_depth + e, zip_tie_cutout_depth + e]);
         }
         // Top indent
-        translate([x_pos, (height + chassis_height)/2 - zip_tie_indent_depth, zip_z]) {
-            cube([switch_width, zip_tie_indent_depth, zip_tie_cutout_depth]);
+        translate([x_pos, ((height + chassis_height)/2 - zip_tie_indent_depth) + .1, zip_z]) {
+            cube([component_width, zip_tie_indent_depth + e , zip_tie_cutout_depth + e]);
         }
     }
 
@@ -255,14 +229,14 @@ module switch_mount(switch_width, switch_height, switch_depth) {
         margin = 3; // Keep holes away from edges
 
         // Chassis dimensions used by both hole sections
-        chassis_height = min(switch_height + (2 * case_thickness), height);
-        chassis_width = min(switch_width + (2 * case_thickness), (rack_width == 152.4) ? 120.65 : 221.5);
+        chassis_height = min(component_height + (2 * case_thickness), height);
+        chassis_width = min(component_width + (2 * case_thickness), (rack_width == 152.4) ? 120.65 : 221.5);
         side_margin = ((rack_width - chassis_width) / 2) + component_offset;
 
         // TOP/BOTTOM FACE HOLES (Y-axis, penetrating top and bottom chassis walls)
         // Calculate available space for holes within switch dimensions
-        available_width = switch_width - (2 * margin);
-        available_depth = switch_depth - (2 * margin);
+        available_width = component_width - (2 * margin);
+        available_depth = component_depth - (2 * margin);
 
         // Calculate number of holes that fit
         x_cols = floor(available_width / spacing_x);
@@ -274,7 +248,7 @@ module switch_mount(switch_width, switch_height, switch_depth) {
 
         // Center the grid within the switch cutout area
         cutout_center_x = (rack_width / 2) + component_offset;
-        cutout_center_z = front_plate_thickness + switch_depth / 2;
+        cutout_center_z = front_plate_thickness + component_depth / 2;
 
         x_start = cutout_center_x - actual_grid_width / 2;
         z_start = cutout_center_z - actual_grid_depth / 2;
@@ -294,8 +268,8 @@ module switch_mount(switch_width, switch_height, switch_depth) {
                     z_pos = z_start + j * spacing_z + z_offset;
 
                     // Only place hole if it fits within bounds after staggering
-                    if (z_pos + hole_d/2 <= cutout_center_z + switch_depth/2 - margin &&
-                        z_pos - hole_d/2 >= cutout_center_z - switch_depth/2 + margin) {
+                    if (z_pos + hole_d/2 <= cutout_center_z + component_depth/2 - margin &&
+                        z_pos - hole_d/2 >= cutout_center_z - component_depth/2 + margin) {
                         translate([x_pos, y_hole_top, z_pos]) {
                             rotate([90, 0, 0]) {
                                 cylinder(h = y_hole_h, d = hole_d, $fn = 6);
@@ -310,7 +284,7 @@ module switch_mount(switch_width, switch_height, switch_depth) {
 
         // Calculate available space within chassis height (includes case walls above/below switch)
         available_height = chassis_height - (2 * margin);
-        available_side_depth = switch_depth - (2 * margin);
+        available_side_depth = component_depth - (2 * margin);
 
         // Calculate number of holes that fit on sides
         y_cols = floor(available_height / spacing_x);  // Use spacing_x for Y direction
@@ -340,8 +314,8 @@ module switch_mount(switch_width, switch_height, switch_depth) {
                     // Only place hole if it fits within bounds after staggering
                     if (y_pos + hole_d/2 <= cutout_center_y + chassis_height/2 - margin &&
                         y_pos - hole_d/2 >= cutout_center_y - chassis_height/2 + margin &&
-                        z_pos + hole_d/2 <= cutout_center_z + switch_depth/2 - margin &&
-                        z_pos - hole_d/2 >= cutout_center_z - switch_depth/2 + margin) {
+                        z_pos + hole_d/2 <= cutout_center_z + component_depth/2 - margin &&
+                        z_pos - hole_d/2 >= cutout_center_z - component_depth/2 + margin) {
                         translate([side_margin - 1, y_pos, z_pos]) {
                             rotate([0, 90, 0]) {
                                 rotate([0, 0, 90]) {  // Rotate hexagon 90 degrees to match front/back orientation
@@ -357,28 +331,23 @@ module switch_mount(switch_width, switch_height, switch_depth) {
 
     // Complete keystone with embossed triangle
     module keystone(){
-        e=0.01; // epsilon for coplanar face fixes, fixes bug where some faces leave a thin sliver of material
+        
         wall=2.5;
         front_hole_width=14.9;
         front_hole_height=16.3;
         front_hole_z_offset=4.28;
         front_hole_lip=0;
-
         jack_width=front_hole_width+wall;
         jack_height=25;
         jack_depth=9.7;
         front_large_catch_depth=3;
         front_chamfer_angle=50; // degrees from horizontal (depth axis)
-
         back_hole_height=24.4;
         back_hole_z_offset=1.9;
-
         back_small_catch_length=2;
         back_small_catch_depth=1.4;
-
         back_large_catch_length=2.6;
         back_large_catch_depth=1.3;
-        
         back_chamfer=1.2;
 
         // Flip entire part because I accidentially desinged it upside down
@@ -390,10 +359,10 @@ module switch_mount(switch_width, switch_height, switch_depth) {
                     difference(){
                         cube([jack_width+wall,jack_depth,jack_height+wall]);
                         // Front hole
-                        translate([(jack_width+wall-front_hole_width)/2,0,front_hole_z_offset])
+                        translate([(jack_width+wall-front_hole_width)/2,-e,front_hole_z_offset])
                             cube([front_hole_width,jack_depth+wall,front_hole_height]);
                         // Back hole
-                        translate([(jack_width+wall-front_hole_width)/2,front_large_catch_depth,back_hole_z_offset])
+                        translate([(jack_width+wall-front_hole_width)/2,front_large_catch_depth - e,back_hole_z_offset])
                             cube([front_hole_width,jack_depth+wall-front_large_catch_depth,back_hole_height]);
                         // Chamfer on front face of small catch
                         translate([wall + front_hole_width, 0, 0])
@@ -443,60 +412,143 @@ module switch_mount(switch_width, switch_height, switch_depth) {
             } // end union
         } // end mirror
     } // end module keystone
-
-
-
-    // Punch the full keystone footprint through the front face plate
-    module keystone_front_cutout() {
-        translate([keystone_tx, keystone_ty, -tolerance]) {
-            cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance]);
-        }
-    }
-
-    // Main assembly - cleaner boolean structure
-    translate([-rack_width/2, -height/2, 0]) {
-        difference() {
-            main_body();
-            union() {
-                switch_cutout();
-                all_rack_holes();
-                zip_tie_features();
-                if (front_wire_holes) {
-                    power_wire_cutouts();
-                }
-                if (air_holes) {
-                    air_holes();
+    // Assembly - boolean structure
+    // ==============================================================
+    difference() {
+        body();
+        union() {
+            zip_tie_features();
+            if (air_holes) {
+                air_holes();
                 }
                 
-                if (keystones) {
-                    if (keystone_left) {      //Cutout for left Keystone
-                        keystone_front_cutout();
-                    }
-                    if (keystone_right){     //Cutout for Right Keystone
-                        translate([rack_width, 0, 0]) mirror([1, 0, 0])
-                        keystone_front_cutout();
-                    }
-                }
-            }
         }
-       if (keystones) {
-           //rotate([90,0,0]) maps keystone Y→rack Z (depth), keystone Z→rack -Y (compensated by +keystone_outer_height in translate)
-           if (keystone_left){    //Make left Keystone
+    }
+    if (keystones) {
+        //rotate([90,0,0]) maps keystone Y→rack Z (depth), keystone Z→rack -Y (compensated by +keystone_outer_height in translate)
+        if (keystone_left){    //Make left Keystone
             translate([keystone_tx, keystone_ty + keystone_outer_height, 0]) rotate([90,0,0]) keystone();
-           }
-          if (keystone_right){   //Make right Keystone
+        }
+        if (keystone_right){   //Make right Keystone
             translate([rack_width, 0, 0]) mirror([1, 0, 0])
             translate([keystone_tx, keystone_ty + keystone_outer_height, 0]) rotate([90,0,0]) keystone();
-          }
         }
     }
 }
+// Power wire cutouts: Make holes on left and right of the component_mount
+module power_wire_cutouts(component_width, component_height, component_depth, component_offset) {
+        
+    // When the front is solid the switch slides in from the back, so everything
+    // shifts rearward by front_plate_thickness to keep zip ties at the switch's back face.
+    solid_z_offset = front_plate_hole ? 0 : front_plate_thickness;
+    chassis_depth_main = component_depth + zip_tie_cutout_depth + solid_z_offset;
+        
+    mid_y = (height - component_height) / 2 + component_height / 2; // Midplane of switch opening
+    hole_spacing_x = component_width; // match rack holes
+    if (front_wire_hole_left){   //make left hole
+        hole_left_x = (rack_width - hole_spacing_x) / 2 - (wire_diameter /5) + component_offset;
+        translate([hole_left_x, mid_y, -.1]) {
+            linear_extrude(height = chassis_depth_main + .2) {circle(d=wire_diameter);}
+            }
+    }
+    if (front_wire_hole_right){   //make right hole
+        hole_right_x = (rack_width + hole_spacing_x) / 2 + (wire_diameter /5) + component_offset;
+        translate([hole_right_x, mid_y, -.1]) {
+            linear_extrude(height = chassis_depth_main + .2) {circle(d=wire_diameter);}
+            }
+    }
+}
+// component_cutout: used to create cutout with optional lip for component_mount
+module component_cutout(component_width, component_height, component_depth, component_offset) {
+ 
+    // When the front is solid the switch slides in from the back, so everything
+    // shifts rearward by front_plate_thickness to keep zip ties at the switch's back face.
+    solid_z_offset = front_plate_hole ? 0 : front_plate_thickness;
+    chassis_depth_main = component_depth + zip_tie_cutout_depth + solid_z_offset;
 
+    // Calculated dimensions
+    cutout_w = component_width + (2 * tolerance);
+    cutout_h = component_height + (2 * tolerance);
+    cutout_x = (rack_width - cutout_w) / 2;
+    cutout_y = (height - cutout_h) / 2;
+        
+    if (front_plate_hole && front_lip) {
+        lip_thickness = 1.2;
+        lip_depth = 0.60;
+        // Main cutout minus lip (centered)
+        translate([
+            ((rack_width - (cutout_w - 2*lip_thickness)) / 2) + component_offset,
+            (height - (cutout_h - 2*lip_thickness)) / 2,
+            -tolerance
+        ]) {
+            cube([cutout_w - 2*lip_thickness, cutout_h - 2*lip_thickness, chassis_depth_main]);
+        }
+        // Switch cutout above the lip (centered)
+        translate([
+            ((rack_width - cutout_w) / 2) + component_offset,
+            (height - cutout_h) / 2, 
+            lip_depth]) 
+        {
+            cube([cutout_w, cutout_h, chassis_depth_main ]);
+        }
+    } else {
+        // Full cutout: starts at front face when front_plate_hole, or behind front panel when solid
+        z_start = front_plate_hole ? -tolerance : front_plate_thickness;
+        z_depth = front_plate_hole ? chassis_depth_main + 2*tolerance : chassis_depth_main - front_plate_thickness + tolerance;
+        translate([
+            ((rack_width - cutout_w) / 2) + component_offset,
+            (height - cutout_h) / 2,
+            z_start
+        ]) {
+            cube([cutout_w, cutout_h, z_depth]);
+        }
+    }
+}
+//  make_rack(): Main assembly - boolean structure
+// ==============================================================
+module make_rack(){
+        translate([-rack_width/2, -height/2, 0]){
+            difference(){
+                union(){
+                    front_panel();
+                    if (component1){
+                        component_mount(component1_width, component1_height, component1_depth, component1_offset);  
+                    }
+                    if (component2){
+                        component_mount(component2_width, component2_height, component2_depth, component2_offset);
+                    }
+                    if (component3){
+                        component_mount(component3_width, component3_height, component3_depth, component3_offset);
+                    }
+                }
+                if (component1){
+                    component_cutout(component1_width, component1_height, component1_depth, component1_offset);
+                    if (front_wire_holes){
+                        power_wire_cutouts(component1_width, component1_height, component1_depth, component1_offset); 
+                    }
+                }
+                if (component2){
+                    component_cutout(component2_width, component2_height, component2_depth, component2_offset);  
+                   if (front_wire_holes){
+                        power_wire_cutouts(component2_width, component2_height, component2_depth, component2_offset); 
+                    }  
+                }
+                if (component3){
+                    component_cutout(component3_width, component3_height, component3_depth, component3_offset);  
+                   if (front_wire_holes){
+                        power_wire_cutouts(component3_width, component3_height, component3_depth, component3_offset); 
+                    }  
+                }
+            }
+    }
+}
+// ==============================================================
 // Call the module
 if ($preview) {
     rotate([-90,0,0])
-        translate([0, -height/2, -component_depth/2])
-            switch_mount(component_width, component_height, component_depth);
+        translate([0, -height/2, -component1_depth/2]){
+            make_rack();
+        }
 } else {
-    switch_mount(component_width, component_height, component_depth);
+    make_rack();
 }
