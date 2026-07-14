@@ -158,13 +158,16 @@ module front_panel() {
     }
     // Punch the full keystone footprint through the front face plate
     module keystone_front_cutout() {
-        translate([keystone_tx, keystone_ty, -tolerance]) {
-            cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance]);
+        if (keystones) {
+            translate([keystone_tx, keystone_ty, -tolerance]) {
+                cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance]);
+            }
         }
     }
     module component_front_cutout(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes ){
-        if (component) {            // add y offset here V
-            translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, front_plate_thickness/2])
+        blank_start = front_plate_hole ? 0 : front_plate_thickness/2;
+        if (component) {           
+            translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, front_plate_thickness/2 + blank_start])
                 cuboid([component_width + tolerance*2, component_height + tolerance*2, front_plate_thickness+1]);
             if (component1_wire_holes < 4){
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes); 
@@ -177,20 +180,18 @@ module front_panel() {
         translate([rack_width/2, height/2, front_plate_thickness/2]) // this undoes the first translate in the main assembly might get rid of later. Translate Mark
         cuboid([rack_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
         all_rack_holes(); 
-        if (keystones) {
-            if (keystone_left) {      //Cutout for left Keystone
+        if (keystone_left) {      //Cutout for left Keystone
+            keystone_front_cutout();
+        }
+        if (keystone_right){     //Cutout for Right Keystone
+            translate([rack_width, 0, 0]) mirror([1, 0, 0])
                 keystone_front_cutout();
-            }
-            if (keystone_right){     //Cutout for Right Keystone
-                translate([rack_width, 0, 0]) mirror([1, 0, 0])
-                keystone_front_cutout();
-            }
-        } //Cutout window in rack panel for componets. will need to change translates later Translate Mark
+        } 
+        //Cutout window in rack panel for componets. will need to change translates later Translate Mark
         component_front_cutout(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes );
         component_front_cutout(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes );
         component_front_cutout(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes );
     }
-   
 }
 //========================================================================================
 // component_mount: used to make the soild shape of the holder for each component 
@@ -210,23 +211,12 @@ module component_mount(component, component_width, component_height, component_d
     chassis_depth_indented = chassis_depth_main - zip_tie_indent_depth;
     $fn = 64;
 
-    // Helper module
-    module rounded_chassis_profile(width, height, radius, depth) {
-        hull() {
-            translate([radius, radius, 0]) cylinder(h = depth, r = radius);
-            translate([width - radius, radius, 0]) cylinder(h = depth, r = radius);
-            translate([radius, height - radius, 0]) cylinder(h = depth, r = radius);
-            translate([width - radius, height - radius, 0]) cylinder(h = depth, r = radius);
-        }
-    }
     // Create the main body as a separate module
     module body() {
-        side_margin = ((rack_width - chassis_width) / 2) + component_side_offset;
         chassis_height = min(component_height + (2 * case_thickness), height);
         // Chassis body
-        translate([side_margin, (height - chassis_height) / 2 - component_up_offset, front_plate_thickness]) {
-            rounded_chassis_profile(chassis_width, chassis_height, chassis_edge_radius, chassis_depth_main - front_plate_thickness);   
-        }
+        translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, chassis_depth_main/2])
+            cuboid([chassis_width, chassis_height, chassis_depth_main - front_plate_thickness], rounding = chassis_edge_radius, edges=["Z"]);
     }
     // component_cutout: used to create cutout with optional lip for component_mount
     module component_cutout(){
