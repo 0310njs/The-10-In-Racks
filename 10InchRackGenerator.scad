@@ -19,7 +19,7 @@ component1_up_offset = 0;  // [-100:0.1:100]
 component1_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
 // ========================================
 /* [Component2] */
-component2 = true;
+component2 = false;
 component2_width = 110.0;
 component2_depth = 122.0;
 component2_height = 28.30;
@@ -29,7 +29,7 @@ component2_up_offset = 0;  // [-100:0.1:100]
 component2_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
 // ========================================
 /* [Component3] */
-component3 = true;
+component3 = false;
 component3_width = 110.0;
 component3_depth = 122.0;
 component3_height = 28.30;
