@@ -202,7 +202,6 @@ module component_mount(component, component_width, component_height, component_d
     //10 inch racks (mounts=254.0mm; rails=15.875mm; usable space=221.5mm)
     chassis_width = min(component_width + (2 * case_thickness), (rack_width == 152.4) ? 120.65 : 221.5);
     chassis_edge_radius = 2.0;
-    tolerance = 0.42;
 
     // When the front is solid the switch slides in from the back, so everything
     // shifts rearward by front_plate_thickness to keep zip ties at the switch's back face.
