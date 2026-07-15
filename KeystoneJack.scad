@@ -1,136 +1,64 @@
+include <BOSL2/std.scad>
+include <BOSL2/walls.scad>
+
 cross_section_preview=true;
-module keystone(
-){
-    e=0.01; // epsilon for coplanar face fixes, fixes bug where some faces leave a thin sliver of material
-    wall=2.5;
-    front_hole_width=14.9;
-    front_hole_height=16.3;
-    front_hole_z_offset=4.28;
-    front_hole_lip=0;
 
-    jack_width=front_hole_width+wall;
-    jack_height=25;
-    jack_depth=9.7;
-    front_large_catch_depth=3;
-    front_chamfer_angle=50; // degrees from horizontal (depth axis)
-
-    back_hole_height=24.4;
-    back_hole_z_offset=1.9;
-
-    back_small_catch_length=2;
-    back_small_catch_depth=1.4;
-
-    back_large_catch_length=2.6;
-    back_large_catch_depth=1.3;
+module keystone(){
+    // This module makes one cuboid then cuts it with three more and one cut for the triangle.
+    keystone_width = 19.9;
+    keystone_height = 27.5;
+    keystone_depth = 9.7;
     
-    back_chamfer=1.2;
+    hole_width=14.9;
+    
+    cut_1_height=19.3;
+    cut_1_depth=3;
+    cut_1_z_offset=-.18;
+    cut_1_y_offset=-3.36;
+    
+    cut_2_height=24.4;
+    cut_2_depth=5.35;
+    cut_2_z_offset=-.35;
+    cut_2_y_offset=.8;
+    
+    cut_3_height=19.8;
+    cut_3_depth=2.35;
+    cut_3_z_offset=-.65;
+    cut_3_y_offset=4.5;
 
-    // Flip entire part because I accidentially desinged it upside down
-    translate([0, 0, jack_height + wall]) 
-    mirror([0, 0, 1]) {
-        union(){
-            difference(){
-                // Make solid cube
-                cube([jack_width+wall,jack_depth,jack_height+wall]);
-            // Cut out the front hole
-            translate([(jack_width+wall-front_hole_width)/2,-e,front_hole_z_offset])
-                color("blue")
-                cube([front_hole_width,jack_depth+wall,front_hole_height]);
-            // Cut out the back hole. It should be extruded to front_large_catch_depth
-            translate([(jack_width+wall-front_hole_width)/2,front_large_catch_depth - e,back_hole_z_offset ])
-                color("red")
-                cube([front_hole_width,jack_depth+wall-front_large_catch_depth,back_hole_height]);
-
-            // Cut out chamfer on front face of small catch
+    
+    translate([0, keystone_depth/2, 0])//makes the origin the face 
+        difference(){
+            //main body cuts are made from
+            cuboid([keystone_width, keystone_depth, keystone_height], chamfer=1.25, edges=[BACK]);
+            color("red")
+            //cut 1
+            translate([0, cut_1_y_offset,cut_1_z_offset])
+                    cuboid([hole_width, cut_1_depth, cut_1_height], chamfer=3, edges=[FRONT+BOTTOM]);
+            color("blue")
+            //cut 2
+            translate([0, cut_2_y_offset, cut_2_z_offset])
+                    cuboid([hole_width, cut_2_depth, cut_2_height]);
             color("green")
-            translate([wall + front_hole_width, 0, 0])
-                rotate([0, -90, 0])
-                    linear_extrude(front_hole_width)
-                        polygon([
-                            [front_hole_z_offset + front_hole_height - e, front_hole_lip - e],          // A: shifted e below catch floor to avoid coplanar artifact
-                            [front_hole_z_offset + front_hole_height + (front_large_catch_depth - front_hole_lip) * tan(front_chamfer_angle), front_large_catch_depth],  // B: angle-derived point
-                            [front_hole_z_offset + front_hole_height - e, front_large_catch_depth]      // C: inner corner, same e shift as A
-                        ]);
-
-            // Cut out chamefer on front face of large catch
-            // color("orange")
-            // translate([wall + front_hole_width, 0, 0])
-            //     rotate([0, -90, 0])
-            //         linear_extrude(front_hole_width)
-            //             polygon([
-            //                 [front_hole_z_offset+e, front_hole_lip],  // A: front face, bottom of front hole
-            //                 [back_hole_z_offset,  front_large_catch_depth],     // B: inner ledge, bottom of back hole
-            //                 [front_hole_z_offset, front_large_catch_depth]      // C: inner ledge, same Z as A
-            //             ]);
-
-            // Front directional triangle emboss (cut into face)
-            color("yellow")
-                translate([(jack_width+wall)/2, 0.4, (front_hole_z_offset + front_hole_height + jack_height + wall) / 2])
-                    rotate([90, 0, 0])
-                        linear_extrude(height = 0.4+e)
-                            polygon([
-                                [0, -2],
-                                [-2, 2],
-                                [2, 2]
-                            ]);
-
-            // Chamfer back bottom edge (along X)
-            translate([jack_width+wall+e, 0, -e])
-                rotate([0, -90, 0])
-                    linear_extrude(jack_width+wall+2*e)
-                        polygon([[-e, jack_depth+e], [back_chamfer, jack_depth+e], [-e, jack_depth-back_chamfer]]);
-
-            // Chamfer back top edge (along X)
-            translate([jack_width+wall+e, 0, -e])
-                rotate([0, -90, 0])
-                    linear_extrude(jack_width+wall+2*e)
-                        polygon([[jack_height+wall+2*e, jack_depth+e], [jack_height+wall+2*e-back_chamfer, jack_depth+e], [jack_height+wall+2*e, jack_depth-back_chamfer]]);
-
-            // Chamfer back left edge (along Z)
-            translate([0, 0, -e])
-                linear_extrude(jack_height+wall+2*e)
-                    polygon([[-e, jack_depth+e], [back_chamfer, jack_depth+e], [-e, jack_depth-back_chamfer]]);
-
-            // Chamfer back right edge (along Z)
-            translate([0, 0, -e])
-                linear_extrude(jack_height+wall+2*e)
-                    polygon([[jack_width+wall+e, jack_depth+e], [jack_width+wall+e-back_chamfer, jack_depth+e], [jack_width+wall+e, jack_depth-back_chamfer]]);
-
-            } // end difference
-
-            // Small back catch (added geometry)
-            color("purple")
-                translate([wall + front_hole_width, 0, 0])
-                    rotate([0, -90, 0])
-                        linear_extrude(front_hole_width)
-                            polygon([
-                                [back_hole_z_offset + back_hole_height - back_small_catch_length, jack_depth - back_small_catch_depth],  // A
-                                [back_hole_z_offset + back_hole_height,                           jack_depth - back_small_catch_depth],  // B
-                                [back_hole_z_offset + back_hole_height,                           jack_depth],                           // C
-                                [back_hole_z_offset + back_hole_height - back_small_catch_length, jack_depth]                            // D
-                            ]);
-
-            // Large back catch (added geometry)
-            color("cyan")
-                translate([wall + front_hole_width, 0, 0])
-                    rotate([0, -90, 0])
-                        linear_extrude(front_hole_width)
-                            polygon([
-                                [back_hole_z_offset,                           jack_depth - back_large_catch_depth],  // A
-                                [back_hole_z_offset + back_large_catch_length, jack_depth - back_large_catch_depth],  // B
-                                [back_hole_z_offset + back_large_catch_length, jack_depth],                           // C
-                                [back_hole_z_offset,                           jack_depth]                            // D
-                            ]);
-
-        } // end union
-    }
+            //cut  3
+            translate([0, cut_3_y_offset, cut_3_z_offset])
+                    cuboid([hole_width, cut_3_depth, cut_3_height]);
+            color("White")
+            // cut for the triangle
+            translate([0, (-keystone_depth/2)+.5, -keystone_height/2+3])
+                rotate([90,-90,0])
+                    linear_extrude(1)
+                        circle(r=3, $fn=3);
+        }
 }
 
 
 if ($preview && cross_section_preview) {
-    intersection() {
+    
+    difference() {
         keystone();
-        cube([10, 35, 50]);
+        translate([0, -1, -20])
+            cube([10, 35, 60]);
     }
 } else if ($preview) {
     keystone();
