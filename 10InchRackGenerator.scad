@@ -157,7 +157,7 @@ module front_panel() {
         }
     }
     // Punch the full keystone footprint through the front face plate
-    module keystone_front_cutout() {
+    module keystone_front_cutout(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_G_rotate) {
         if (keystones) {
             translate([0, 0, front_plate_thickness/2]) {
                 cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance], center=true);
@@ -294,51 +294,7 @@ module component_mount(component, component_width, component_height, component_d
         }
     }
     // Complete keystone with embossed triangle
-    module keystone(){
-        // This module makes one cuboid then cuts it with three more and one cut for the triangle.
-        keystone_width = 19.9;
-        keystone_height = 9.7;
-        keystone_depth = 27.5;
-        
-        hole_width=14.9;
-        
-        cut_1_height=3;
-        cut_1_depth=19.3;
-        cut_1_z_offset=-3.36;
-        cut_1_y_offset=-.18;
-        
-        cut_2_height=5.35;
-        cut_2_depth=24.4;
-        cut_2_z_offset=.8;
-        cut_2_y_offset=-.35;
-        
-        cut_3_height=2.35;
-        cut_3_depth=19.8;
-        cut_3_z_offset=4.5;
-        cut_3_y_offset=-.65;
-
-        if (keystones){
-        translate([0, 0, keystone_height/2])//makes the origin the face 
-            difference(){
-                //main body cuts are made from
-                cuboid([keystone_width, keystone_depth, keystone_height], chamfer=1.25, edges=[TOP]);
-                //cut 1
-                translate([0, cut_1_y_offset,cut_1_z_offset])
-                        cuboid([hole_width, cut_1_depth, cut_1_height], chamfer=3, edges=[FRONT+BOTTOM]);
-                //cut 2
-                translate([0, cut_2_y_offset, cut_2_z_offset])
-                        cuboid([hole_width, cut_2_depth, cut_2_height]);
-                //cut  3
-                translate([0, cut_3_y_offset, cut_3_z_offset])
-                        cuboid([hole_width, cut_3_depth, cut_3_height]);
-                // cut for the triangle
-                translate([0,(-keystone_depth/2)+2.5 , -keystone_height/2-.01])
-                    rotate([0,0,90])
-                        linear_extrude(1)
-                            circle(r=3, $fn=3);
-            }
-        }
-    }
+    
     // Assembly - boolean structure
     // ==============================================================
     if(component){
@@ -353,6 +309,54 @@ module component_mount(component, component_width, component_height, component_d
             add_lip(); 
         }
     }
+}
+module keystone(){
+    // This module makes one cuboid then cuts it with three more and one cut for the triangle.
+    keystone_width = 19.9;
+    keystone_height = 9.7;
+    keystone_depth = 27.5;
+    
+    hole_width=14.9;
+    
+    cut_1_height=3;
+    cut_1_depth=19.3;
+    cut_1_z_offset=-3.36;
+    cut_1_y_offset=-.18;
+    
+    cut_2_height=5.35;
+    cut_2_depth=24.4;
+    cut_2_z_offset=.8;
+    cut_2_y_offset=-.35;
+    
+    cut_3_height=2.35;
+    cut_3_depth=19.8;
+    cut_3_z_offset=4.5;
+    cut_3_y_offset=-.65;
+
+    if (keystones){
+    translate([0, 0, keystone_height/2])//makes the origin the face 
+        difference(){
+            //main body cuts are made from
+            cuboid([keystone_width, keystone_depth, keystone_height], chamfer=1.25, edges=[TOP]);
+            //cut 1
+            translate([0, cut_1_y_offset,cut_1_z_offset])
+                    cuboid([hole_width, cut_1_depth, cut_1_height], chamfer=3, edges=[FRONT+BOTTOM]);
+            //cut 2
+            translate([0, cut_2_y_offset, cut_2_z_offset])
+                    cuboid([hole_width, cut_2_depth, cut_2_height]);
+            //cut  3
+            translate([0, cut_3_y_offset, cut_3_z_offset])
+                    cuboid([hole_width, cut_3_depth, cut_3_height]);
+            // cut for the triangle
+            translate([0,(-keystone_depth/2)+2.5 , -keystone_height/2-.01])
+                rotate([0,0,90])
+                    linear_extrude(1)
+                        circle(r=3, $fn=3);
+        }
+    }
+}
+
+module keystone_jack_group(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_G_rotate){
     if (keystone_left){    //Make left Keystone
         translate([keystone_outer_width/2 + 22, height/2, 0])  
             keystone();
@@ -362,7 +366,6 @@ module component_mount(component, component_width, component_height, component_d
             keystone();            
     }
 }
-
 //  make_rack(): Main assembly - boolean structure
 // ==============================================================
 module make_rack(){
@@ -372,6 +375,7 @@ module make_rack(){
                     component_mount(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes);  
                     component_mount(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes);
                     component_mount(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes);
+                    keystone_jack_group();
                 }
     }
 }
