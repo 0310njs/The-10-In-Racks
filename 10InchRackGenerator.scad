@@ -149,7 +149,7 @@ module front_panel() {
                     show_hole = fully_inside || (half_height_holes && partially_inside && !fully_inside);
                     if (show_hole) {
                         translate([side_x, hole_y, front_plate_thickness/2]) {
-                            cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=3.5,edges=["Z"]);
+                            cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
                         }
                     }
                 }
@@ -159,8 +159,8 @@ module front_panel() {
     // Punch the full keystone footprint through the front face plate
     module keystone_front_cutout() {
         if (keystones) {
-            translate([keystone_tx, keystone_ty, -tolerance]) {
-                cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance]);
+            translate([0, 0, front_plate_thickness/2]) {
+                cube([keystone_outer_width, keystone_outer_height, front_plate_thickness + 2 * tolerance], center=true);
             }
         }
     }
@@ -181,10 +181,11 @@ module front_panel() {
         cuboid([rack_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
         all_rack_holes(); 
         if (keystone_left) {      //Cutout for left Keystone
-            keystone_front_cutout();
+            translate([keystone_outer_width/2 + 22, height/2, 0])
+                keystone_front_cutout();
         }
         if (keystone_right){     //Cutout for Right Keystone
-            translate([rack_width, 0, 0]) mirror([1, 0, 0])
+            translate([rack_width - keystone_outer_width/2 - 22, height/2, 0])
                 keystone_front_cutout();
         } 
         //Cutout window in rack panel for componets. will need to change translates later Translate Mark
@@ -353,11 +354,11 @@ module component_mount(component, component_width, component_height, component_d
         }
     }
     if (keystone_left){    //Make left Keystone
-        translate([keystone_outer_width/2  + 22, height/2, 0])  
+        translate([keystone_outer_width/2 + 22, height/2, 0])  
             keystone();
     }
     if (keystone_right){   //Make right Keystone
-        translate([rack_width - keystone_outer_width/2  - 22, height/2, 0])          
+        translate([rack_width - keystone_outer_width/2 - 22, height/2, 0])          
             keystone();            
     }
 }
