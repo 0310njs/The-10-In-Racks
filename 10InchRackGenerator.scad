@@ -7,6 +7,7 @@ rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 rack_height = 1.0; // [0.5:0.5:5]
 // Thickness of the front panel (the flat face plate).
 front_plate_thickness = 3.0;
+// Guide rails show the suggested boundrys of the mounts of the rack.(guide rails will not show up in final rendering).
 guide_rails_on = true;
 // ========================================
 /* [Component1] */
@@ -42,11 +43,13 @@ component3_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
 /* [Keystone group 1] */
 // Add keystone jacks to the front panel
 keystones1 = false;    // [true: Place keystone jacks, false: Remove keystone jacks]
+keystones1_I_rotate = 0;  // [-90:90:180]
 keystones1_side_offset = -95;  // [-95:0.1:95]
 // ========================================
 /* [Keystone group 2] */
 // Add keystone jacks to the front panel
 keystones2 = false;    // [true: Place keystone jacks, false: Remove keystone jacks]
+keystones2_I_rotate = 0;  // [-90:90:180]
 keystones2_side_offset = 95;  // [-95:0.1:95]
 // ========================================
 /* [Holes] */
@@ -176,7 +179,9 @@ module front_panel() {
         if (keystone_jack_group) {
             translate([0, 0, front_plate_thickness/2]) {
                 translate([rack_width/2 + keystone_jack_side_offset, height/2, 0])
+                    rotate([0,0,keystone_jack_I_rotate]){
                     cube([keystone_width, keystone_height, front_plate_thickness + 2 * tolerance], center=true);
+                    }
             }
         }
     }
@@ -196,8 +201,8 @@ module front_panel() {
         translate([rack_width/2, height/2, front_plate_thickness/2]) // this undoes the first translate in the main assembly might get rid of later. Translate Mark
         cuboid([rack_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
         all_rack_holes(); 
-        keystone_front_cutout(keystones1,keystones1_side_offset,0,1,0,0);
-        keystone_front_cutout(keystones2,keystones2_side_offset,0,1,0,0);
+        keystone_front_cutout(keystones1,keystones1_side_offset,0,1,keystones1_I_rotate,0);
+        keystone_front_cutout(keystones2,keystones2_side_offset,0,1,keystones2_I_rotate,0);
 
         //Cutout window in rack panel for componets. will need to change translates later Translate Mark
         component_front_cutout(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes );
@@ -366,8 +371,10 @@ module keystone(){
 module keystone_jack_group(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_G_rotate){
     
     if (keystone_jack_group){   //check if Keystone group enabled
-        translate([rack_width/2 + keystone_jack_side_offset, height/2, 0])          
-            keystone();            
+        translate([rack_width/2 + keystone_jack_side_offset, height/2, 0]) 
+            rotate([0,0,keystone_jack_I_rotate]){
+                keystone();  
+            }          
     }
 }
 //  make_rack(): Main assembly - boolean structure
@@ -379,8 +386,8 @@ module make_rack(){
                     component_mount(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes);  
                     component_mount(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes);
                     component_mount(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes);
-                    keystone_jack_group(keystones1,keystones1_side_offset,0,1,0,0);
-                    keystone_jack_group(keystones2,keystones2_side_offset,0,1,0,0);
+                    keystone_jack_group(keystones1,keystones1_side_offset,0,1,keystones1_I_rotate,0);
+                    keystone_jack_group(keystones2,keystones2_side_offset,0,1,keystones2_I_rotate,0);
                 }
             if($preview && guide_rails_on){
                 guide_rails();
