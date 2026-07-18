@@ -58,7 +58,7 @@ wire_diameter = 7; // Diameter of power wire holes
 // Adds hexagon air cutouts to reduce material and improve cooling.
 air_holes = true; // [true:Show air holes, false:Hide air holes]
 // size of struts between hexs.
-hex_strut = 4; 
+hex_strut = 4; // [1:1:14]
 // spacing determines how many hexs will fit in the space.
 hex_spacing = 15;
 // controls the thickness of the frame around the  hex cutout.
@@ -283,13 +283,13 @@ module component_mount(component, component_width, component_height, component_d
         
         if(air_holes){
             translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, component_depth/2]){
-                if(test_hex_fit_x >= 0){
+                if(test_hex_fit_x >= 0){// cut hex hole from top and bottom
                     difference(){         
                         cuboid([component_width + case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"]);
                         hex_panel([component_width + case_thickness*2 + e*2, component_depth, component_height + case_thickness*2 + e*2], hex_strut, hex_spacing, frame=hex_bottom_frame, orient=FRONT); 
                     }
                 }
-                if (test_hex_fit_Y >= 0){
+                if (test_hex_fit_Y >= 0){//  cut hex holes form the sides
                     difference(){            
                         cuboid([component_width+ case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"]);
                         hex_panel([ component_depth, component_height + case_thickness*2 + e*2, component_width+ case_thickness*2 + e*2 ], hex_strut, hex_spacing, frame=hex_bottom_frame, orient=LEFT); 

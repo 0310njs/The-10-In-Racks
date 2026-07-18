@@ -1,4 +1,5 @@
 include <BOSL2/std.scad>
+include <BOSL2/walls.scad>
 
 /* [Panel settings] */
 Accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Top Plate]
@@ -8,10 +9,20 @@ rack_height = 1.0; // [0.5:0.5:5]
 // Thickness of the front panel (the flat face plate).
 front_plate_thickness = 3.0;
 half_height_holes = true; // [true:Show partial holes at edges, false:Hide partial holes]
+
+/* [Top plate settings] */
+// Adds hexagon air cutouts to reduce material and improve cooling.
+air_holes = true; // [true:Show air holes, false:Hide air holes]
+hex_strut = 4; // [1:1:14]
+// spacing determines how many hexs will fit in the space.
+hex_spacing = 15;
+// controls the thickness of the frame around the  hex cutout.
+hex_bottom_frame = 10;  // [8:1:50]
 /* [Hidden] */
 height = 44.45 * rack_height;
 e=0.01; // epsilon for coplanar face fixes, fixes faces that leave a thin sliver of material
 $fn = 50; // how fine the shapes are.
+tolerance = 0.42;
 
 hook_width=10;
 hook_height=10;
@@ -83,10 +94,10 @@ module bolt_hole(cut){
         }
         union(){
             linear_extrude(4+e)
-                circle(r=5.5, $fn=6);
+                circle(r=11.6/2, $fn=6);
             translate([0,0,-2-e])
                 linear_extrude(2.1)
-                    circle(r=3, $fn=20);
+                    circle(r=3.1, $fn=20);
         }
     }
 }
@@ -170,7 +181,7 @@ module top_plate(){
     }
     
     module outside_bolt_hole(pos1,pos2){
-        translate([(pos1)*plate_width/2+(-pos1)*cutout_width/2, (-pos2)*plate_depth/2+(pos2)*cutout_depth/2+(pos2)*20, 0]){
+        translate([(pos1)*plate_width/2+(-pos1)*cutout_width/2, (-pos2)*plate_depth/2+(pos2)*slot_height/2+(pos2)*18, 0]){
             cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
             translate([0,(pos2)*20,0])
                 cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
@@ -192,6 +203,16 @@ module top_plate(){
         outside_bolt_hole(-1,1);
         outside_bolt_hole(1,-1);
         outside_bolt_hole(-1,-1);
+        
+        test_hex_fit_Y = (plate_depth -20*2) - ( hex_spacing + hex_bottom_frame*2 + hex_strut*2);
+        test_hex_fit_x = (plate_width -20*2) - ( hex_spacing + hex_bottom_frame*2 + hex_strut*2);
+        
+        if(air_holes && test_hex_fit_Y > 0 && test_hex_fit_x > 0){
+            difference(){         
+                cuboid([plate_width-20, plate_depth-20, front_plate_thickness + e*2],rounding=0,edges=["Z"]);
+                hex_panel([plate_width-20, plate_depth-20, front_plate_thickness + e*2], hex_strut, hex_spacing, frame=hex_bottom_frame, orient=TOP, $fn = 10); 
+            }
+        }
     }
     
     
