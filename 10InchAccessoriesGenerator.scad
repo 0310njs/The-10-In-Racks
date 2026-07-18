@@ -15,7 +15,7 @@ $fn = 50; // how fine the shapes are.
 
 hook_width=10;
 hook_height=10;
-hook_length=50;
+hook_length=40;
 hook_end_length=17;
 hook_rounding=2;
 
@@ -74,13 +74,28 @@ module front_panel(){
         }
     }
 }
-
+// if cut is true bolt holt will make a bolt shape used to make a cut for the hole else it will make a whole bolt hole  15x15x6.
+module bolt_hole(cut){
+    difference(){
+        if(!cut){
+            translate([0,0,1])
+                cuboid([15, 15, 6],rounding=1,edges=["ALL"]);
+        }
+        union(){
+            linear_extrude(4+e)
+                circle(r=5.5, $fn=6);
+            translate([0,0,-2-e])
+                linear_extrude(2.1)
+                    circle(r=3, $fn=20);
+        }
+    }
+}
 module hook(){
     alignment_offset=2;
     
     translate([0,0,hook_length/2])  //hook body
         cuboid([hook_width, hook_height, hook_length],rounding=hook_rounding,edges=["ALL"]);
-    translate([0,hook_length/6-alignment_offset,hook_length-alignment_offset/2])  //hook end
+    translate([0,hook_end_length/2-alignment_offset,hook_length-alignment_offset/2])  //hook end
         cuboid([hook_height, hook_end_length-alignment_offset, hook_width],rounding=hook_rounding,edges=["ALL"]);
     translate([0,alignment_offset/2,hook_length-alignment_offset])  // hook bend
         xcyl(l=hook_width, d=hook_height+hook_rounding, rounding=hook_rounding);
@@ -106,19 +121,103 @@ module claw(){
         }
     }
 }
-if ($preview) {
-    if(Accessories==1){
-        tsproot();
-    }
-    if(Accessories==2){
-        claw();
+module top_plate_holder(){
+    
+    bridge_len=54;
+    bolt_plate_width=20;
+    bolt_plate_length=50;
+    
+    front_panel();
+    translate([-(-plate_width+bridge_len)/2,-height/2-6,0])//bridge piece
+            cuboid([bridge_len, 10, front_plate_thickness],rounding=1,edges=["Z"]);
+    translate([0,-height/2,0])// connector between bridge and front panel
+            cuboid([plate_width, 5.5, front_plate_thickness],rounding=1,edges=["NONE"]);
+    translate([(-plate_width-bridge_len)/2-7,-height/2-front_plate_thickness,0])rotate([90,0,0])
+    wedge([15,15,5]);
+    
+    //bolt plate
+    difference(){
+        union(){
+            translate([-bridge_len+bolt_plate_width-1.5,-height/2-front_plate_thickness+.5,bolt_plate_length/2-front_plate_thickness/2]) //the plate
+                cuboid([20, front_plate_thickness, bolt_plate_length],rounding=1,edges=["Y"]);
+            translate([-bridge_len+bolt_plate_width-1.5,-height/2-front_plate_thickness+2,20])rotate([90,0,180]){//bolt hole mounts
+                cuboid([15, 15, 6],rounding=1,edges=["ALL"]);
+                translate([0,20,0])
+                cuboid([15, 15, 6],rounding=1,edges=["ALL"]);
+            }
+        }
+        translate([-bridge_len+bolt_plate_width-1.5,-height/2-front_plate_thickness+1,20])rotate([90,0,180]){  //the cuts for the bolt holes
+            bolt_hole(true);
+            translate([0,20,0])
+            bolt_hole(true);
+        }
     }
 }
- else {
+module top_plate(){
+    plate_width=220;
+    plate_depth=207;
+    
+    cutout_width=20;
+    cutout_depth=10;
+    
+    slot_len = (rack_width == 152.4) ? 6.5 : 10.0;
+    slot_height = (rack_width == 152.4) ? 3.25 : 7.0;
+    
+    module cutout(pos1,pos2){
+        translate([(pos1)*plate_width/2+(-pos1)*cutout_width/2, (-pos2)*plate_depth/2+(pos2)*cutout_depth/2, 0]){
+            cuboid([cutout_width+e*2, cutout_depth+e*2, front_plate_thickness+e*2],rounding=1,edges=["NONE"]);
+        }
+    }
+    
+    module outside_bolt_hole(pos1,pos2){
+        translate([(pos1)*plate_width/2+(-pos1)*cutout_width/2, (-pos2)*plate_depth/2+(pos2)*cutout_depth/2+(pos2)*20, 0]){
+            cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
+            translate([0,(pos2)*20,0])
+                cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
+        }
+    }
+    
+    difference(){
+        //the base of the plate
+        cuboid([plate_width, plate_depth, front_plate_thickness],rounding=1,edges=["ALL"]);
+        
+        //cutouts for top plate holders
+        cutout(1,1);
+        cutout(-1,1);
+        cutout(1,-1);
+        cutout(-1,-1);
+
+        //holes for connecting top plate to toop plate holder
+        outside_bolt_hole(1,1);
+        outside_bolt_hole(-1,1);
+        outside_bolt_hole(1,-1);
+        outside_bolt_hole(-1,-1);
+    }
+    
+    
+    
+}
+module make_accessories(){
     if(Accessories==1){
         tsproot();
     }
     if(Accessories==2){
         claw();
     }
+    if(Accessories==3){
+        translate([-20,0,0])
+        top_plate_holder();
+        translate([20,0,0])mirror([1,0,0])
+        top_plate_holder();
+    }
+    if(Accessories==4){
+        top_plate();
+    }
+    
+}
+if ($preview) {
+    make_accessories();
+}
+ else {
+    make_accessories();
 }
