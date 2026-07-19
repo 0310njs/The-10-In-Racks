@@ -53,6 +53,8 @@ keystones1_up_offset = 0;  // [-100:0.1:100]
 keystones1_num = 1; // [1:1:10]
 //increase or decrease the space between each keystone jacks in the group. When jack is at 90 degrees recommend 6.5 as min spaceing
 keystones1_spaceing = 0; // [0:0.1:20]
+//Enabling this feature will stack the keystones vertically instead of horazontally
+keystones1_vertical = false;
 // ========================================
 /* [Keystone group 2] */
 // Add keystone jacks to the front panel.
@@ -67,6 +69,8 @@ keystones2_up_offset = 0;  // [-100:0.1:100]
 keystones2_num = 1; // [1:1:10]
 //increase or decrease the space between each keystone jacks in the group.
 keystones2_spaceing = 0; // [0:0.1:20]
+//Enabling this feature will stack the keystones vertically instead of horazontally
+keystones2_vertical = false;
 // ========================================
 /* [Holes] */
 // Diameter of wire to route through front_wire_holes.
@@ -112,10 +116,10 @@ module guide_rails(){
     
     translate([3/2 + 22, height/2, 2.9])
     color("red")
-    cuboid([3, height, 6], chamfer=1, edges=["ALL"]);
+    cuboid([3, height, 6], chamfer=1, edges=["ALL"], $fn = 5);
     translate([rack_width - 3/2 - 22, height/2, 2.9])
     color("red")
-    cuboid([3, height, 6], chamfer=1, edges=["ALL"]);
+    cuboid([3, height, 6], chamfer=1, edges=["ALL"], $fn = 5);
 }
 // Power wire cutouts: Make holes on left and/or right of the component_mount
 module power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes) {
@@ -131,20 +135,19 @@ module power_wire_cutouts(component_width, component_height, component_depth, co
     if (front_wire_holes == 1 || front_wire_holes == 2){   //make left hole
         hole_left_x = (rack_width - component_width) / 2 - (wire_diameter /5) + component_side_offset;
         translate([hole_left_x, mid_y, -.1]) {
-            linear_extrude(height = chassis_depth_main + .2) {circle(d=wire_diameter);}
+            linear_extrude(height = chassis_depth_main + .2) {circle(d=wire_diameter, $fn = 20);}
             }
     }
     if (front_wire_holes == 1 || front_wire_holes == 3){   //make right hole
         hole_right_x = (rack_width + component_width) / 2 + (wire_diameter /5) + component_side_offset;
         translate([hole_right_x, mid_y, -.1]) {
-            linear_extrude(height = chassis_depth_main + .2) {circle(d=wire_diameter);}
+            linear_extrude(height = chassis_depth_main + .2) {circle(d=wire_diameter, $fn = 20);}
             }
     }
 }
 
 // front_panel: used to create Rack panel with mounting holes
 module front_panel() {
-    $fn = 60;
     // Create all rack holes
     module all_rack_holes() {
         // Rack standard: 3 holes per U, with specific positioning
@@ -180,7 +183,7 @@ module front_panel() {
                     show_hole = fully_inside || (half_height_holes && partially_inside && !fully_inside);
                     if (show_hole) {
                         translate([side_x, hole_y, front_plate_thickness/2]) {
-                            cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
+                            cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"], $fn = 40);
                         }
                     }
                 }
@@ -188,15 +191,18 @@ module front_panel() {
         }
     }
     // Punch the full keystone footprint through the front face plate
-    module keystone_front_cutout(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_spaceing) {
+    module keystone_front_cutout(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_spaceing, keystone_jack_vertical) {
         
-        if (keystone_jack_group) {
+        // checks if keystones should be made vertically or horazontally
+        keystone_x_spacing = (keystone_jack_vertical) ? 0 : keystone_width + keystone_jack_spaceing;
+        keystone_y_spacing = (keystone_jack_vertical) ? keystone_width + keystone_jack_spaceing : 0;
+        
+        if (keystone_jack_group) { //check if Keystone group enabled
             translate([0, 0, front_plate_thickness/2]) {
-                for (i = [0:keystone_jack_num-1]) {
-                    translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_width + keystone_jack_spaceing), height/2 - keystone_jack_up_offset, 0])
-                        rotate([0,0,keystone_jack_I_rotate]){
-                        cube([keystone_width, keystone_height, front_plate_thickness + 2 * tolerance], center=true);
-                        }
+                for (i = [0:keystone_jack_num-1]) { // loop for making multible jacks
+                        translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_x_spacing), height/2 - keystone_jack_up_offset + i*(keystone_y_spacing), 0])
+                            rotate([0,0,keystone_jack_I_rotate]) // rotate cuts for jacks individually
+                                cube([keystone_width, keystone_height, front_plate_thickness + 2 * tolerance], center=true);
                 }
             }
         }
@@ -205,7 +211,7 @@ module front_panel() {
         blank_start = front_plate_hole ? 0 : front_plate_thickness/2;
         if (component) {           
             translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, front_plate_thickness/2 + blank_start])
-                cuboid([component_width + tolerance*2, component_height + tolerance*2, front_plate_thickness+1]);
+                cuboid([component_width + tolerance*2, component_height + tolerance*2, front_plate_thickness+1], $fn = 10);
             if (component1_wire_holes < 4){
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes); 
             }
@@ -215,10 +221,10 @@ module front_panel() {
     //====================================================================================
     difference(){
         translate([rack_width/2, height/2, front_plate_thickness/2]) // this undoes the first translate in the main assembly might get rid of later. Translate Mark
-        cuboid([rack_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
+        cuboid([rack_width, height, front_plate_thickness], rounding=4, edges=["Z"], $fn = 20); 
         all_rack_holes(); 
-        keystone_front_cutout(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing);
-        keystone_front_cutout(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing);
+        keystone_front_cutout(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing, keystones1_vertical);
+        keystone_front_cutout(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing, keystones2_vertical);
 
         //Cutout window in rack panel for componets. will need to change translates later Translate Mark
         component_front_cutout(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes );
@@ -248,7 +254,7 @@ module component_mount(component, component_width, component_height, component_d
         chassis_height = min(component_height + (2 * case_thickness), height);
         // Chassis body
         translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, chassis_depth_main/2])
-            cuboid([chassis_width, chassis_height, chassis_depth_main - front_plate_thickness], rounding = chassis_edge_radius, edges=["Z"]);
+            cuboid([chassis_width, chassis_height, chassis_depth_main - front_plate_thickness], rounding = chassis_edge_radius, edges=["Z"], $fn = 20);
     }
     // component_cutout: used to create cutout with optional lip for component_mount
     module component_cutout(){
@@ -301,13 +307,13 @@ module component_mount(component, component_width, component_height, component_d
             translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, component_depth/2]){
                 if(test_hex_fit_x >= 0){// cut hex hole from top and bottom
                     difference(){         
-                        cuboid([component_width + case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"]);
+                        cuboid([component_width + case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"], $fn = 10);
                         hex_panel([component_width + case_thickness*2 + e*2, component_depth, component_height + case_thickness*2 + e*2], hex_strut, hex_spacing, frame=hex_bottom_frame, orient=FRONT, $fn = 10); 
                     }
                 }
                 if (test_hex_fit_Y >= 0){//  cut hex holes form the sides
                     difference(){            
-                        cuboid([component_width+ case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"]);
+                        cuboid([component_width+ case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"], $fn = 10);
                         hex_panel([ component_depth, component_height + case_thickness*2 + e*2, component_width+ case_thickness*2 + e*2 ], hex_strut, hex_spacing, frame=hex_bottom_frame, orient=LEFT, $fn = 10); 
                     }
                 }
@@ -366,13 +372,13 @@ module keystone(){
     translate([0, 0, keystone_depth/2])//makes the origin the face 
         difference(){
             //main body cuts are made from
-            cuboid([keystone_width, keystone_height, keystone_depth], chamfer=1.25, edges=[TOP]);
+            cuboid([keystone_width, keystone_height, keystone_depth], chamfer=1.25, edges=[TOP], $fn = 10);
             //cut 1
             translate([0, cut_1_y_offset,cut_1_z_offset])
-                    cuboid([hole_width, cut_1_depth, cut_1_height], chamfer=3, edges=[FRONT+BOTTOM]);
+                    cuboid([hole_width, cut_1_depth, cut_1_height], chamfer=3, edges=[FRONT+BOTTOM], $fn = 10);
             //cut 2
             translate([0, cut_2_y_offset, cut_2_z_offset])
-                    cuboid([hole_width, cut_2_depth, cut_2_height]);
+                    cuboid([hole_width, cut_2_depth, cut_2_height], $fn = 10);
             //cut  3
             translate([0, cut_3_y_offset, cut_3_z_offset])
                     cuboid([hole_width, cut_3_depth, cut_3_height]);
@@ -384,13 +390,17 @@ module keystone(){
         } 
 }
 
-module keystone_jack_group(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_spaceing){
+module keystone_jack_group(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_spaceing, keystone_jack_vertical){
+    
+    // checks if keystones should be made vertically or horazontally
+    keystone_x_spacing = (keystone_jack_vertical) ? 0 : keystone_width + keystone_jack_spaceing;
+    keystone_y_spacing = (keystone_jack_vertical) ? keystone_width + keystone_jack_spaceing : 0;
     
     if (keystone_jack_group){   //check if Keystone group enabled
         for (i = [0:keystone_jack_num-1]) { // loop for making multible jacks
-        translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_width + keystone_jack_spaceing), height/2 - keystone_jack_up_offset, 0]) 
-            rotate([0,0,keystone_jack_I_rotate]){// rotate jacks individually
-                keystone();  
+            translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_x_spacing), height/2 - keystone_jack_up_offset + i*(keystone_y_spacing), 0]) 
+                rotate([0,0,keystone_jack_I_rotate]){// rotate jacks individually
+                    keystone();  
             }    
         }      
     }
@@ -404,8 +414,8 @@ module make_rack(){
                     component_mount(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes);  
                     component_mount(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes);
                     component_mount(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes);
-                    keystone_jack_group(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing);
-                    keystone_jack_group(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing);
+                    keystone_jack_group(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing, keystones1_vertical);
+                    keystone_jack_group(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing, keystones2_vertical);
                 }
             if($preview && guide_rails_on){
                 guide_rails();
