@@ -45,24 +45,28 @@ component3_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
 keystones1 = false;    // [true: Place keystone jacks, false: Remove keystone jacks]
 //Rotate keystone jacks individually.
 keystones1_I_rotate = 0;  // [-90:90:180]
-//Move keystone group left or right.
+//Move keystone group left or right. When jack is at 90 degrees recommend -91 as max offset
 keystones1_side_offset = -95;  // [-95:0.1:95]
 //Move keystone group up or down.
 keystones1_up_offset = 0;  // [-100:0.1:100]
 //increase or decrease the number of keystone jacks in the group.
 keystones1_num = 1; // [1:1:10]
+//increase or decrease the space between each keystone jacks in the group. When jack is at 90 degrees recommend 6.5 as min spaceing
+keystones1_spaceing = 0; // [0:0.1:20]
 // ========================================
 /* [Keystone group 2] */
 // Add keystone jacks to the front panel.
 keystones2 = false;    // [true: Place keystone jacks, false: Remove keystone jacks]
 //Rotate keystone jacks individually.
 keystones2_I_rotate = 0;  // [-90:90:180]
-//Move keystone group left or right.
+//Move keystone group left or right. When jack is at 90 degrees recommend -91 as max offset
 keystones2_side_offset = 95;  // [-95:0.1:95]
 //Move keystone group up or down.
 keystones2_up_offset = 0;  // [-100:0.1:100]
 //increase or decrease the number of keystone jacks in the group.
 keystones2_num = 1; // [1:1:10]
+//increase or decrease the space between each keystone jacks in the group.
+keystones2_spaceing = 0; // [0:0.1:20]
 // ========================================
 /* [Holes] */
 // Diameter of wire to route through front_wire_holes.
@@ -184,12 +188,12 @@ module front_panel() {
         }
     }
     // Punch the full keystone footprint through the front face plate
-    module keystone_front_cutout(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_G_rotate) {
+    module keystone_front_cutout(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_spaceing) {
         
         if (keystone_jack_group) {
             translate([0, 0, front_plate_thickness/2]) {
                 for (i = [0:keystone_jack_num-1]) {
-                    translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_width), height/2 - keystone_jack_up_offset, 0])
+                    translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_width + keystone_jack_spaceing), height/2 - keystone_jack_up_offset, 0])
                         rotate([0,0,keystone_jack_I_rotate]){
                         cube([keystone_width, keystone_height, front_plate_thickness + 2 * tolerance], center=true);
                         }
@@ -213,8 +217,8 @@ module front_panel() {
         translate([rack_width/2, height/2, front_plate_thickness/2]) // this undoes the first translate in the main assembly might get rid of later. Translate Mark
         cuboid([rack_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
         all_rack_holes(); 
-        keystone_front_cutout(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,0);
-        keystone_front_cutout(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,0);
+        keystone_front_cutout(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing);
+        keystone_front_cutout(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing);
 
         //Cutout window in rack panel for componets. will need to change translates later Translate Mark
         component_front_cutout(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes );
@@ -380,12 +384,12 @@ module keystone(){
         } 
 }
 
-module keystone_jack_group(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_G_rotate){
+module keystone_jack_group(keystone_jack_group, keystone_jack_side_offset, keystone_jack_up_offset, keystone_jack_num, keystone_jack_I_rotate, keystone_jack_spaceing){
     
     if (keystone_jack_group){   //check if Keystone group enabled
-        for (i = [0:keystone_jack_num-1]) {
-        translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_width), height/2 - keystone_jack_up_offset, 0]) 
-            rotate([0,0,keystone_jack_I_rotate]){
+        for (i = [0:keystone_jack_num-1]) { // loop for making multible jacks
+        translate([rack_width/2 + keystone_jack_side_offset + i*(keystone_width + keystone_jack_spaceing), height/2 - keystone_jack_up_offset, 0]) 
+            rotate([0,0,keystone_jack_I_rotate]){// rotate jacks individually
                 keystone();  
             }    
         }      
@@ -400,8 +404,8 @@ module make_rack(){
                     component_mount(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes);  
                     component_mount(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes);
                     component_mount(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes);
-                    keystone_jack_group(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,0);
-                    keystone_jack_group(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,0);
+                    keystone_jack_group(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing);
+                    keystone_jack_group(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing);
                 }
             if($preview && guide_rails_on){
                 guide_rails();
