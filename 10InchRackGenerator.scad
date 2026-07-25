@@ -19,6 +19,8 @@ component1_side_offset = 0;  // [-100:0.1:100]
 component1_up_offset = 0;  // [-100:0.1:100]
 // Adds small cutout a USB or Power cable could be routed through to the front
 component1_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
+// Diameter of wire to route through front_wire_holes.
+component1_wire_diameter=7; // Diameter of power wire holes
 // ========================================
 /* [Component2] */
 component2 = false;
@@ -29,6 +31,8 @@ component2_side_offset = 0;  // [-100:0.1:100]
 component2_up_offset = 0;  // [-100:0.1:100]
 // Adds small cutout a USB or Power cable could be routed through to the front
 component2_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
+// Diameter of wire to route through front_wire_holes.
+component2_wire_diameter=7; // Diameter of power wire holes
 // ========================================
 /* [Component3] */
 component3 = false;
@@ -39,6 +43,8 @@ component3_side_offset = 0;  // [-100:0.1:100]
 component3_up_offset = 0;  // [-100:0.1:100]
 // Adds small cutout a USB or Power cable could be routed through to the front
 component3_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
+// Diameter of wire to route through front_wire_holes.
+component3_wire_diameter=7; // Diameter of power wire holes
 // ========================================
 /* [Keystone group 1] */
 // Add keystone jacks to the front panel.
@@ -72,9 +78,7 @@ keystones2_spaceing = 0; // [0:0.1:20]
 //Enabling this feature will stack the keystones vertically instead of horazontally
 keystones2_vertical = false;
 // ========================================
-/* [Holes] */
-// Diameter of wire to route through front_wire_holes.
-wire_diameter = 7; // Diameter of power wire holes
+/* [Air Hole Settings] */
 // Adds hexagon air cutouts to reduce material and improve cooling.
 air_holes = true; // [true:Show air holes, false:Hide air holes]
 // size of struts between hexs.
@@ -122,7 +126,7 @@ module guide_rails(){
     cuboid([3, height, 6], chamfer=1, edges=["ALL"], $fn = 5);
 }
 // Power wire cutouts: Make holes on left and/or right of the component_mount
-module power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes) {
+module power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, wire_diameter) {
     
     // When the front is solid the switch slides in from the back, so everything
     // shifts rearward by front_plate_thickness to keep zip ties at the switch's back face.
@@ -207,13 +211,13 @@ module front_panel() {
             }
         }
     }
-    module component_front_cutout(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes ){
+    module component_front_cutout(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes, component_wire_diameter ){
         blank_start = front_plate_hole ? 0 : front_plate_thickness/2;
         if (component) {           
             translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, front_plate_thickness/2 + blank_start])
                 cuboid([component_width + tolerance*2, component_height + tolerance*2, front_plate_thickness+1], $fn = 10);
             if (component1_wire_holes < 4){
-                power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes); 
+                power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes,component_wire_diameter); 
             }
         }
     }
@@ -227,15 +231,15 @@ module front_panel() {
         keystone_front_cutout(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing, keystones2_vertical);
 
         //Cutout window in rack panel for componets. will need to change translates later Translate Mark
-        component_front_cutout(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes );
-        component_front_cutout(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes );
-        component_front_cutout(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes );
+        component_front_cutout(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes, component1_wire_diameter );
+        component_front_cutout(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes, component2_wire_diameter );
+        component_front_cutout(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes, component3_wire_diameter );
     }
 }
 //========================================================================================
 // component_mount: used to make the soild shape of the holder for each component 
 // with air holes and ziptie modules inside as well.
-module component_mount(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes) {
+module component_mount(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter) {
     
     //6 inch racks (mounts=152.4mm; rails=15.875mm; usable space=120.65mm)
     //10 inch racks (mounts=254.0mm; rails=15.875mm; usable space=221.5mm)
@@ -327,7 +331,7 @@ module component_mount(component, component_width, component_height, component_d
             difference() {
                 translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, 0])
                     rect_tube(size=[component_width + tolerance*2,component_height + tolerance*2], wall=.6, h=.6, $fn = 10);
-                power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes);
+                power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter);
             }
         }
     }
@@ -340,7 +344,7 @@ module component_mount(component, component_width, component_height, component_d
             difference() {
                 body();
                 component_cutout();  
-                power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes);
+                power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter);
                 zip_tie_features();
                 air_holes();
             }
@@ -411,9 +415,9 @@ module make_rack(){
         translate([-rack_width/2, -height/2, 0]){
                 union(){
                     front_panel();
-                    component_mount(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes);  
-                    component_mount(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes);
-                    component_mount(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes);
+                    component_mount(component1, component1_width, component1_height, component1_depth, component1_side_offset, component1_up_offset, component1_wire_holes, component1_wire_diameter);  
+                    component_mount(component2, component2_width, component2_height, component2_depth, component2_side_offset, component2_up_offset, component2_wire_holes, component2_wire_diameter);
+                    component_mount(component3, component3_width, component3_height, component3_depth, component3_side_offset, component3_up_offset, component3_wire_holes, component3_wire_diameter);
                     keystone_jack_group(keystones1,keystones1_side_offset,keystones1_up_offset,keystones1_num,keystones1_I_rotate,keystones1_spaceing, keystones1_vertical);
                     keystone_jack_group(keystones2,keystones2_side_offset,keystones2_up_offset,keystones2_num,keystones2_I_rotate,keystones2_spaceing, keystones2_vertical);
                 }
