@@ -11,7 +11,7 @@ front_plate_thickness = 3.0;
 guide_rails_on = true;
 // ========================================
 /* [Component1] */
-component1 = true;
+component1 = 1; // [1: Insert Mount, 2: Shelf Mount, 3: Hard Drive Mount, 4: disable]
 component1_width = 110.0;
 component1_depth = 122.0;
 component1_height = 28.30;
@@ -25,7 +25,7 @@ component1_wire_diameter=7; // Diameter of power wire holes
 component1_air_holes=true; // [true:Show air holes, false:Hide air holes]
 // ========================================
 /* [Component2] */
-component2 = false;
+component2 = 4; // [1: Insert Mount, 2: Shelf Mount, 3: Hard Drive Mount, 4: disable]
 component2_width = 110.0;
 component2_depth = 122.0;
 component2_height = 28.30;
@@ -39,7 +39,7 @@ component2_wire_diameter=7; // Diameter of power wire holes
 component2_air_holes=true; // [true:Show air holes, false:Hide air holes]
 // ========================================
 /* [Component3] */
-component3 = false;
+component3 = 4; // [1: Insert Mount, 2: Shelf Mount, 3: Hard Drive Mount, 4: disable]
 component3_width = 110.0;
 component3_depth = 122.0;
 component3_height = 28.30;
@@ -343,7 +343,7 @@ module component_mount(component, component_width, component_height, component_d
     
     // Assembly - boolean structure
     // ==============================================================
-    if(component){
+    if(component < 4){
         union() {
             difference() {
                 body();
@@ -351,6 +351,10 @@ module component_mount(component, component_width, component_height, component_d
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter);
                 zip_tie_features();
                 air_holes();
+                if(component == 2){
+                    
+                    
+                }
             }
             add_lip(); 
         }
