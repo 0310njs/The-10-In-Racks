@@ -101,6 +101,8 @@ case_thickness = 6; // Thickness of case walls
 front_plate_hole = true; // [true:Show front plate hole, false:Solid front plate]
 // Prevent part from sliding out the front by adding a small 0.6mm lip around the front plate hole.
 front_lip = true; // [true:Show front lip, false:Hide front lip]
+//Changes the size of the stopper for shelfs
+stopper_size=10;
 // Default gap between part and print walls
 tolerance = 0.42;
 // ========================================
@@ -217,7 +219,7 @@ module front_panel() {
     }
     module component_front_cutout(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes, component_wire_diameter ){
         blank_start = front_plate_hole ? 0 : front_plate_thickness/2;
-        if (component) {           
+        if (component < 4) {           
             translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, front_plate_thickness/2 + blank_start])
                 cuboid([component_width + tolerance*2, component_height + tolerance*2, front_plate_thickness+1], $fn = 10);
             if (component1_wire_holes < 4){
@@ -284,6 +286,10 @@ module component_mount(component, component_width, component_height, component_d
             cube([cutout_w, cutout_h, z_depth]);
 }
     // Create zip tie holes and indents
+    module shelf_type(){
+        translate([rack_width/2 + component_side_offset,case_thickness/2 - component_up_offset, chassis_depth_main/2])
+        cube([chassis_width - (case_thickness*2-tolerance*2) ,case_thickness*2,chassis_depth_main], center = true);
+    }
     module zip_tie_features() {
         // Zip tie holes
         zip_z = component_depth + solid_z_offset;
@@ -340,6 +346,14 @@ module component_mount(component, component_width, component_height, component_d
         }
     }
     // Complete keystone with embossed triangle
+    module add_stopper(){
+        translate([rack_width/2 + component_side_offset - component_width/2-2, height - case_thickness - component_up_offset, chassis_depth_main-1.5])rotate([90,90,0])
+            wedge([3,stopper_size,stopper_size]);
+        translate([rack_width/2 + component_side_offset + component_width/2+2,height - case_thickness - component_up_offset, chassis_depth_main-4.5])rotate([90,-90,0])
+            wedge([3,stopper_size,stopper_size]);
+    }
+    
+    
     
     // Assembly - boolean structure
     // ==============================================================
@@ -349,14 +363,20 @@ module component_mount(component, component_width, component_height, component_d
                 body();
                 component_cutout();  
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter);
-                zip_tie_features();
                 air_holes();
+                if(component == 1){
+                zip_tie_features();
+                }
                 if(component == 2){
-                    
-                    
+                    shelf_type();                    
                 }
             }
-            add_lip(); 
+            if(component == 1){
+                add_lip(); 
+            }
+            if(component == 2){
+                add_stopper();
+            }
         }
     }
 }
