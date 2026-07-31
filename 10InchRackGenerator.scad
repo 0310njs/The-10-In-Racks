@@ -316,8 +316,9 @@ module component_mount(component, component_width, component_height, component_d
         
         test_hex_fit_Y = (component_height + case_thickness*2) - ( hex_spacing + hex_bottom_frame*2);
         test_hex_fit_x = (component_width + case_thickness*2) - ( hex_spacing + hex_bottom_frame*2);
+        test_hex_fit_z = (component_depth) - ( hex_spacing + hex_bottom_frame*2);        
         
-        if(air_holes){
+        if(air_holes && test_hex_fit_z > 0){
             translate([rack_width/2 + component_side_offset, height/2 - component_up_offset, component_depth/2]){
                 if(test_hex_fit_x >= 0){// cut hex hole from top and bottom
                     difference(){         
@@ -365,7 +366,7 @@ module component_mount(component, component_width, component_height, component_d
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter);
                 air_holes();
                 if(component == 1){
-                zip_tie_features();
+                    zip_tie_features();
                 }
                 if(component == 2){
                     shelf_type();                    
