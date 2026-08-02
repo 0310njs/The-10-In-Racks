@@ -57,7 +57,7 @@ render_views() {
             --camera="${cameras[$i]}" \
             --autocenter --viewall \
             --colorscheme="Tomorrow Night" \
-            "$@" "$SCAD" 2>/dev/null || return 1
+            "$@" "$SCAD"  2>/dev/null || return 1
     done
 
     if [ "$RENDER_STL" = "1" ]; then

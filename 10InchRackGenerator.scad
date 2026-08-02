@@ -4,7 +4,7 @@ include <BOSL2/walls.scad>
 /* [Panel settings] */
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
-rack_height = 1.0; // [0.5:0.5:5]
+rack_height = 1.0; // [0.5:0.5:5.5]
 // Thickness of the front panel (the flat face plate).
 front_plate_thickness = 3.0;
 // Guide rails show the suggested boundrys of the mounts of the rack.(guide rails will not show up in final rendering).
