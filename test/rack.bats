@@ -59,7 +59,7 @@ setup_file() {
 }
 
 @test "front wire holes" {
-    render_views "wire_holes" -D 'component1_wire_holes=true' -D  'guide_rails_on=false'
+    render_views "wire_holes" -D 'component1_wire_holes=3' -D  'guide_rails_on=false'
     assert_views_exist "wire_holes"
 }
 
@@ -82,25 +82,29 @@ setup_file() {
 
 @test "Firewalla Gold (120x120x30)" {
     render_views "firewalla_gold" \
-        -D 'component1_width=120' -D 'component1_depth=120' -D 'component1_height=30' -D  'guide_rails_on=false'
+        -D 'component1_width=120' -D 'component1_depth=120' -D 'component1_height=30'\
+ 	-D  'guide_rails_on=false'
     assert_views_exist "firewalla_gold"
 }
 
 @test "Firewalla Purple Ethernet (130x110x34)" {
     render_views "firewalla_purple_ethernet" \
-        -D 'component1_width=130' -D 'component1_depth=110' -D 'component1_height=34' -D  'guide_rails_on=false'
+        -D 'component1_width=130' -D 'component1_depth=110' -D 'component1_height=34'\
+	-D  'guide_rails_on=false'
     assert_views_exist "firewalla_purple_ethernet"
 }
 
 @test "Firewalla Purple SE (90x60x30)" {
     render_views "firewalla_purple_se" \
-        -D 'component1_width=90' -D 'component1_depth=60' -D 'component1_height=30' -D  'guide_rails_on=false'
+        -D 'component1_width=90' -D 'component1_depth=60' -D 'component1_height=30'\
+	-D  'guide_rails_on=false'
     assert_views_exist "firewalla_purple_se"
 }
 
 @test "UniFi Security Gateway (135x135x28.3)" {
     render_views "unifi_security_gateway" \
-        -D 'component1_width=135' -D 'component1_depth=135' -D 'component1_height=28.3' -D  'guide_rails_on=false'
+        -D 'component1_width=135' -D 'component1_depth=135' -D 'component1_height=28.3'\ 
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_security_gateway"
 }
 
@@ -113,25 +117,29 @@ setup_file() {
 
 @test "UniFi Flex Mini (107x70x21)" {
     render_views "unifi_flex_mini" \
-        -D 'component1_width=107' -D 'component1_depth=70' -D 'component1_height=21' -D  'guide_rails_on=false'
+        -D 'component1_width=107' -D 'component1_depth=70' -D 'component1_height=21'\
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_flex_mini"
 }
 
 @test "UniFi Flex Mini 2.5G (117.1x90x21.2)" {
     render_views "unifi_flex_mini_2_5g" \
-        -D 'component1_width=117.1' -D 'component1_depth=90' -D 'component1_height=21.2' -D  'guide_rails_on=false'
+        -D 'component1_width=117.1' -D 'component1_depth=90' -D 'component1_height=21.2'\
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_flex_mini_2_5g"
 }
 
 @test "UniFi Flex 2.5 (212.9x76x33.5)" {
     render_views "unifi_flex_2_5" \
-        -D 'component1_width=212.9' -D 'component1_depth=76' -D 'component1_height=33.5' -D  'guide_rails_on=false'
+        -D 'component1_width=212.9' -D 'component1_depth=76' -D 'component1_height=33.5'\
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_flex_2_5"
 }
 
 @test "UniFi Lite 8 POE (99.6x163.7x31.7)" {
     render_views "unifi_lite_8_poe" \
-        -D 'component1_width=99.6' -D 'component1_depth=163.7' -D 'component1_height=31.7' -D  'guide_rails_on=false'
+        -D 'component1_width=99.6' -D 'component1_depth=163.7' -D 'component1_height=31.7'\
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_lite_8_poe"
 }
 
@@ -144,13 +152,15 @@ setup_file() {
 
 @test "UniFi Express (98x98x30)" {
     render_views "unifi_express" \
-        -D 'component1_width=98' -D 'component1_depth=98' -D 'component1_height=30' -D  'guide_rails_on=false'
+        -D 'component1_width=98' -D 'component1_depth=98' -D 'component1_height=30'\
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_express"
 }
 
 @test "UniFi Cloud Gateway Ultra/Max (141.8x127.6x30)" {
     render_views "unifi_cloud_gateway_ultra" \
-        -D 'component1_width=141.8' -D 'component1_depth=127.6' -D 'component1_height=30' -D  'guide_rails_on=false'
+        -D 'component1_width=141.8' -D 'component1_depth=127.6' -D 'component1_height=30'\
+	-D 'guide_rails_on=false'
     assert_views_exist "unifi_cloud_gateway_ultra"
 }
 
@@ -158,31 +168,36 @@ setup_file() {
 
 @test "IBM M70q Gen 5 (179x182.9x36.5)" {
     render_views "ibm_m70q_gen5" \
-        -D 'component1_width=179' -D 'component1_depth=182.9' -D 'component1_height=36.5' -D  'guide_rails_on=false'
+        -D 'component1_width=179' -D 'component1_depth=182.9' -D 'component1_height=36.5'\
+	-D 'guide_rails_on=false'
     assert_views_exist "ibm_m70q_gen5"
 }
 
 @test "IBM M70q Gen 4 (179x183x34.5)" {
     render_views "ibm_m70q_gen4" \
-        -D 'component1_width=179' -D 'component1_depth=183' -D 'component1_height=34.5' -D  'guide_rails_on=false'
+        -D 'component1_width=179' -D 'component1_depth=183' -D 'component1_height=34.5'\
+	-D 'guide_rails_on=false'
     assert_views_exist "ibm_m70q_gen4"
 }
 
 @test "IBM M90q Gen 5 (179x182.9x36.5)" {
     render_views "ibm_m90q_gen5" \
-        -D 'component1_width=179' -D 'component1_depth=182.9' -D 'component1_height=36.5' -D  'guide_rails_on=false'
+        -D 'component1_width=179' -D 'component1_depth=182.9' -D 'component1_height=36.5'\
+	-D 'guide_rails_on=false'
     assert_views_exist "ibm_m90q_gen5"
 }
 
 @test "Dell OptiPlex 7020 (182x178x36)" {
     render_views "dell_optiplex_7020" \
-        -D 'component1_width=182' -D 'component1_depth=178' -D 'component1_height=36' -D  'guide_rails_on=false'
+        -D 'component1_width=182' -D 'component1_depth=178' -D 'component1_height=36'\
+	-D 'guide_rails_on=false'
     assert_views_exist "dell_optiplex_7020"
 }
 
 @test "HP Elite Mini 800 (177.5x175.2x34.3)" {
     render_views "hp_elite_mini_800" \
-        -D 'component1_width=177.5' -D 'component1_depth=175.2' -D 'component1_height=34.3' -D  'guide_rails_on=false'
+        -D 'component1_width=177.5' -D 'component1_depth=175.2' -D 'component1_height=34.3'\
+	-D 'guide_rails_on=false'
     assert_views_exist "hp_elite_mini_800"
 }
 
@@ -203,7 +218,7 @@ setup_file() {
 @test "Xyber Hydra (140x98.5x34.5)" {
     render_views "xyber_hydra" \
         -D 'component1_width=140' -D 'component1_depth=98.5' -D 'component1_height=34.5' -D 'front_plate_hole=true'\
-	-D  'guide_rails_on=false'
+	-D 'guide_rails_on=false'
     assert_views_exist "xyber_hydra"
 }
 

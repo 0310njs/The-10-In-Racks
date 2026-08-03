@@ -28,12 +28,12 @@ setup_file() {
 }
 
 @test "small component_height (air hole edge case) produces valid STL" {
-    render_stl "small_component" -D 'component_height=18' -D 'rack_height=0.5'
+    render_stl "small_component" -D 'component1_height=18' -D 'rack_height=0.5'
     [ -s "$RENDERS/small_component.stl" ]
 }
 
 @test "large component filling rack unit produces valid STL" {
-    render_stl "large_component" -D 'component_height=40'
+    render_stl "large_component" -D 'component1_height=40'
     [ -s "$RENDERS/large_component.stl" ]
 }
 
@@ -43,12 +43,12 @@ setup_file() {
 }
 
 @test "air holes disabled produces valid STL" {
-    render_stl "no_air" -D 'air_holes=false'
+    render_stl "no_air" -D 'component1_air_holes=false'
     [ -s "$RENDERS/no_air.stl" ]
 }
 
 @test "front wire holes enabled produces valid STL" {
-    render_stl "wire_holes" -D 'front_wire_holes=true'
+    render_stl "wire_holes" -D 'component1_wire_holes=1'
     [ -s "$RENDERS/wire_holes.stl" ]
 }
 
@@ -62,14 +62,14 @@ setup_file() {
 @test "missing_air_holes" {
     render_stl "missing_air_holes" \
         -D 'rack_height=1' \
-        -D 'component_width=182' -D 'component_depth=178' -D 'component_height=36' \
-        -D 'air_holes=true'
+        -D 'component1_width=182' -D 'component1_depth=178' -D 'component1_height=36' \
+        -D 'component1_air_holes=true'
     [ -s "$RENDERS/missing_air_holes.stl" ]
 }
 
 @test "chassis height overflow clamped (component_height=36 case_thickness=12)" {
     render_stl "chassis_overflow_clamp" \
-        -D 'component_width=182' -D 'component_depth=178' -D 'component_height=36' \
+        -D 'component1_width=182' -D 'component1_depth=178' -D 'component1_height=36' \
         -D 'case_thickness=12'
     [ -s "$RENDERS/chassis_overflow_clamp.stl" ]
 }
