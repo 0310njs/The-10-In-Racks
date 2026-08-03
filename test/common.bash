@@ -64,6 +64,23 @@ render_views() {
         render_stl "$stem" "$@"
     fi
 }
+render_slide() {
+    local stem="$1"; shift
+    _validate_params "$@" || return 1
+
+    local cameras=("$CAMERA_CORNER")
+    local views=("corner")
+
+    for i in "${!views[@]}"; do
+        "$OPENSCAD" \
+            -o "$RENDERS/${stem}_${views[$i]}.png" \
+            --imgsize="$IMGSIZE" \
+            --camera="${cameras[$i]}" \
+            --autocenter --viewall \
+            --colorscheme="Tomorrow Night" \
+            "$@" "$SCAD"  2>/dev/null || return 1
+    done
+}
 
 # render_stl <stem> [-D name=val ...]
 # Full CGAL geometry render to STL. Slow (~35s each).
@@ -120,4 +137,8 @@ assert_views_exist() {
     [ -s "$RENDERS/${stem}_side.png"   ] || { echo "Missing: ${stem}_side.png";   return 1; }
     [ -s "$RENDERS/${stem}_top.png"    ] || { echo "Missing: ${stem}_top.png";    return 1; }
     [ -s "$RENDERS/${stem}_bottom.png" ] || { echo "Missing: ${stem}_bottom.png"; return 1; }
+}
+assert_slide_exist() {
+    local stem="$1"
+    [ -s "$RENDERS/${stem}_corner.png" ] || { echo "Missing: ${stem}_corner.png"; return 1; }
 }

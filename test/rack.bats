@@ -103,8 +103,8 @@ setup_file() {
 
 @test "UniFi Security Gateway (135x135x28.3)" {
     render_views "unifi_security_gateway" \
-        -D 'component1_width=135' -D 'component1_depth=135' -D 'component1_height=28.3'\ 
-	-D 'guide_rails_on=false'
+        -D 'component1_width=135' -D 'component1_depth=135' -D 'component1_height=28.3'\
+	-D 'guide_rails_on=false'q
     assert_views_exist "unifi_security_gateway"
 }
 
