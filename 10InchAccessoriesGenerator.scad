@@ -1,11 +1,14 @@
 include <BOSL2/std.scad>
 include <BOSL2/walls.scad>
 
-/* [Panel settings] */
-Accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Top Plate]
+/* [General Rack Settings] */
+show_me=1; // [1: Rack Frame Parts, 2: Rack Accessories]
+rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Top Plate]
+accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Top Plate]
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
 rack_height = 1.0; // [0.5:0.5:5]
+rack_depth = 2; // [1: Half Depth, 2: Full Depth]
 // Thickness of the front panel (the flat face plate).
 front_plate_thickness = 3.0;
 half_height_holes = true; // [true:Show partial holes at edges, false:Hide partial holes]
@@ -20,6 +23,7 @@ hex_spacing = 15;
 hex_bottom_frame = 10;  // [8:1:50]
 /* [Hidden] */
 height = 44.45 * rack_height;
+depth = 100 * rack_depth;
 e=0.01; // epsilon for coplanar face fixes, fixes faces that leave a thin sliver of material
 $fn = 50; // how fine the shapes are.
 tolerance = 0.42;
@@ -30,8 +34,12 @@ hook_length=40;
 hook_end_length=17;
 hook_rounding=2;
 
+// used for makeing the front panel and alot of translate command in Accessories Modules
 plate_width=17;
 
+frame_part_width=32;
+//***********************************Helper Modules*********************************//
+// Module used to make the mounting points with holes the will line up with the U size on the rack.
 module front_panel(){
     
     // Create all rack holes
@@ -85,7 +93,7 @@ module front_panel(){
         }
     }
 }
-// if cut is true bolt holt will make a bolt shape used to make a cut for the hole else it will make a whole bolt hole  15x15x6.
+// if cut is true bolt holt will make a bolt shape used with diffrence() to make a cut for the hole else it will make a whole bolt hole  15mmx15mmx6mm.
 module bolt_hole(cut){
     difference(){
         if(!cut){
@@ -101,6 +109,10 @@ module bolt_hole(cut){
         }
     }
 }
+module rail_connection_bump(){
+        prismoid(size1=[8,8], size2=[4,4], h=3);
+}
+// Module used to make the tsproot and the claw
 module hook(){
     alignment_offset=2;
     
@@ -111,6 +123,8 @@ module hook(){
     translate([0,alignment_offset/2,hook_length-alignment_offset])  // hook bend
         xcyl(l=hook_width, d=hook_height+hook_rounding, rounding=hook_rounding);
 }
+//***********************************Helper Modules*********************************//
+//*******************************Rack Accessories Modules*************************//
 module tsproot(){
     translate([0,0,plate_width/2])rotate([0,90,0]){
         front_panel();
@@ -164,6 +178,8 @@ module top_plate_holder(){
         }
     }
 }
+//*******************************Rack Accessories Modules*************************//
+//*******************************Rack Frame Parts Modules*************************//
 module top_plate(){
     plate_width=220;
     plate_depth=207;
@@ -214,31 +230,118 @@ module top_plate(){
             }
         }
     }
+}
+module rack_feet(){
+    feet_height=8;
+    feet_length=40;
     
+    translate([0,0,feet_height/2]){
+        difference(){
+            union(){
+                translate([0,0,feet_height/2-5/2])
+                    cube([frame_part_width,depth,5],center = true);//Main Body
+                // Stand off feet
+                translate([0,depth/2-feet_length/2,0])
+                    cube([frame_part_width, feet_length, feet_height],center = true);
+                translate([0,-depth/2+feet_length/2,0])
+                    cube([frame_part_width, feet_length, feet_height],center = true);
+                // Rail connection point
+                translate([0,-depth/2+15/2,feet_height/2+17/2])
+                    cube([frame_part_width, 15, 17],center = true);
+                translate([0,depth/2-15/2,feet_height/2+17/2])
+                    cube([frame_part_width, 15, 17],center = true);
+                // Rail connection point bumps
+                translate([8,depth/2-15/2,feet_height/2+17])
+                    rail_connection_bump();
+                translate([-8,depth/2-15/2,feet_height/2+17])
+                    rail_connection_bump();
+                translate([8,-depth/2+15/2,feet_height/2+17])
+                    rail_connection_bump();
+                translate([-8,-depth/2+15/2,feet_height/2+17])
+                    rail_connection_bump();
+            }
+            translate([0,depth/2-feet_length/2,feet_height/2+3]) //Cutout for bolt holes
+                    cube([frame_part_width-3,35,15],center = true);
+            translate([0,-depth/2+feet_length/2,feet_height/2+3])
+                    cube([frame_part_width-3,35,15],center = true);
+            //Bolt Hole cuts
+            translate([8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole(true);
+        translate([-8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole(true);
+            translate([8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0])
+                    bolt_hole(true);
+        translate([-8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0]) 
+                    bolt_hole(true);
+            
+        }
+        //Bolt Hole Mounts
+        translate([8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0]) 
+                    bolt_hole();
+        translate([-8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole();
+        translate([8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0])
+                    bolt_hole();
+        translate([-8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0]) 
+                    bolt_hole();
+    }
     
     
 }
+module rack_rails(){
+}
+module rack_handles(){
+}
+//*******************************Rack Frame Parts Modules*************************//
+//*******************************Switch Case Modules*************************//
 module make_accessories(){
-    if(Accessories==1){
+    if(accessories==1){
         tsproot();
     }
-    if(Accessories==2){
+    if(accessories==2){
         claw();
     }
-    if(Accessories==3){
+    if(accessories==3){
         translate([-20,0,0])
         top_plate_holder();
         translate([20,0,0])mirror([1,0,0])
         top_plate_holder();
     }
-    if(Accessories==4){
+    if(accessories==4){
         top_plate();
     }
     
 }
+module make_frame_parts(){
+    if(rack_frame_part==1){
+        rack_feet();
+    }
+    if(rack_frame_part==2){
+        rack_rails();
+    }
+    if(rack_frame_part==3){
+        rack_handles();
+    }
+    if(rack_frame_part==4){
+        top_plate();
+    }
+    
+}
+//*******************************Switch Case Modules*************************//
+//*******************************Exacuted code*************************//
 if ($preview) {
-    make_accessories();
+    if(show_me==1){
+        make_frame_parts();
+    }
+    if(show_me==2){
+        make_accessories();
+    }
 }
  else {
-    make_accessories();
+    if(show_me==1){
+        make_frame_parts();
+    }
+    if(show_me==2){
+        make_accessories();
+    }
 }
