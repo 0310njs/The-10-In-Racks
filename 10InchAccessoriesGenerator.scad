@@ -3,8 +3,8 @@ include <BOSL2/walls.scad>
 
 /* [General Rack Settings] */
 show_me=1; // [1: Rack Frame Parts, 2: Rack Accessories]
-rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Top Plate]
-accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Top Plate]
+rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Top Plate, 5: Side Panel]
+accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Connector Plate]
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
 rack_height = 1.0; // [0.5:0.5:5]
@@ -180,9 +180,137 @@ module top_plate_holder(){
 }
 //*******************************Rack Accessories Modules*************************//
 //*******************************Rack Frame Parts Modules*************************//
+module rack_feet(){
+    feet_height=8;
+    feet_length=40;
+    
+    translate([0,0,feet_height/2]){
+        difference(){
+            union(){
+                //Main Body
+                translate([0,0,feet_height/2-5/2])
+                    cube([frame_part_width,depth,5],center = true);
+                // Stand off feet
+                translate([0,depth/2-feet_length/2,0])
+                    cube([frame_part_width, feet_length, feet_height],center = true);
+                translate([0,-depth/2+feet_length/2,0])
+                    cube([frame_part_width, feet_length, feet_height],center = true);
+                // Rail connection point
+                translate([0,-depth/2+15/2,feet_height/2+17/2])
+                    cube([frame_part_width, 15, 17],center = true);
+                translate([0,depth/2-15/2,feet_height/2+17/2])
+                    cube([frame_part_width, 15, 17],center = true);
+                // Rail connection point bumps
+                translate([8,depth/2-15/2,feet_height/2+17])
+                    rail_connection_bump();
+                translate([-8,depth/2-15/2,feet_height/2+17])
+                    rail_connection_bump();
+                translate([8,-depth/2+15/2,feet_height/2+17])
+                    rail_connection_bump();
+                translate([-8,-depth/2+15/2,feet_height/2+17])
+                    rail_connection_bump();
+            }
+            //Cutout for bolt holes
+            translate([0,depth/2-feet_length/2,feet_height/2+3]) 
+                    cube([frame_part_width-3,35,15],center = true);
+            translate([0,-depth/2+feet_length/2,feet_height/2+3])
+                    cube([frame_part_width-3,35,15],center = true);
+            //Bolt Hole cuts
+            translate([8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole(true);
+            translate([-8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole(true);
+            translate([8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0])
+                    bolt_hole(true);
+            translate([-8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0]) 
+                    bolt_hole(true);
+            
+        }
+        //Bolt Hole Mounts
+        translate([8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0]) 
+                    bolt_hole();
+        translate([-8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole();
+        translate([8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0])
+                    bolt_hole();
+        translate([-8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0]) 
+                    bolt_hole();
+    }
+    
+    
+}
+module rack_rails(){
+}
+module rack_handles(){
+    Mounting_height=10;
+    Handle_height=45;
+    
+    translate([0,0,18]){
+        difference(){
+            union(){
+                //Main Body
+                translate([0,0,Mounting_height/2-5/2])
+                    cube([frame_part_width,depth,5],center = true);
+                // Rail connection point
+                translate([0,-depth/2+15/2,Mounting_height/2-23/2])
+                    cube([frame_part_width, 15, 23],center = true);
+                translate([0,depth/2-15/2,Mounting_height/2-23/2])
+                    cube([frame_part_width, 15, 23],center = true);
+                //Handle
+                translate([0,0,Mounting_height/2+Handle_height/2])
+                    cuboid([frame_part_width, depth, Handle_height],rounding=3,edges=[TOP]);
+                
+            }
+            // Handle Cuts
+            translate([0,0,Mounting_height/2+13/2+e])
+                cuboid([frame_part_width+e*2, depth-30, 13],rounding=3,edges=[FRONT+BOTTOM, BACK+BOTTOM]);
+            translate([0,0,Mounting_height/2+13])
+                prismoid(size1=[frame_part_width+e*2,depth-30], size2=[frame_part_width+e*2,depth-60], h=17);
+            // Handle side chamfers
+            translate([0,-depth/2+Handle_height/4-e,Mounting_height/2+Handle_height/2+Handle_height/4+e])rotate([-90,0,0])
+                    wedge([frame_part_width+e*2,Handle_height/2,Handle_height/2],center = true);
+            translate([0,depth/2-Handle_height/4+e,Mounting_height/2+Handle_height/2+Handle_height/4+e])rotate([180,0,0])
+                    wedge([frame_part_width+e*2,Handle_height/2,Handle_height/2],center = true);
+            translate([frame_part_width/2-Handle_height/2+1.5,0,Mounting_height/2+Handle_height/2])rotate([180,0,90])
+                    wedge([depth+e*2,Handle_height/2,Handle_height+e],center = true);
+            // Rail connection point bumps
+            translate([8,depth/2-15/2,-Mounting_height/2-23/2-3/2-e])
+                rail_connection_bump();
+            translate([-8,depth/2-15/2,-Mounting_height/2-23/2-3/2-e])
+                rail_connection_bump();
+            translate([8,-depth/2+15/2,-Mounting_height/2-23/2-3/2-e])
+                rail_connection_bump();
+            translate([-8,-depth/2+15/2,-Mounting_height/2-23/2-3/2-e])
+                rail_connection_bump();
+            //Bolt Hole cutouts
+            translate([0,depth/2-40/2,-Mounting_height/2]) 
+                    cube([frame_part_width-3,35,15],center = true);
+            translate([0,-depth/2+40/2,-Mounting_height/2])
+                    cube([frame_part_width-3,35,15],center = true);
+            //Bolt Hole cuts
+            translate([8,-depth/2+2,-Mounting_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole(true);
+            translate([-8,-depth/2+2,-Mounting_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole(true);
+            translate([8,depth/2-2,-Mounting_height/2+17-15.5])rotate([90,0,0])
+                    bolt_hole(true);
+            translate([-8,depth/2-2,-Mounting_height/2+17-15.5])rotate([90,0,0]) 
+                    bolt_hole(true);
+        }
+        //Bolt Hole Mounts
+        translate([8,-depth/2+2,-Mounting_height/2+17-15.5])rotate([-90,0,0]) 
+                    bolt_hole();
+        translate([-8,-depth/2+2,-Mounting_height/2+17-15.5])rotate([-90,0,0])
+                    bolt_hole();
+        translate([8,depth/2-2,-Mounting_height/2+17-15.5])rotate([90,0,0])
+                    bolt_hole();
+        translate([-8,depth/2-2,-Mounting_height/2+17-15.5])rotate([90,0,0]) 
+                    bolt_hole();
+    }
+}
 module top_plate(){
     plate_width=220;
-    plate_depth=207;
+    plate_depth=depth+7;
     
     cutout_width=20;
     cutout_depth=10;
@@ -231,66 +359,8 @@ module top_plate(){
         }
     }
 }
-module rack_feet(){
-    feet_height=8;
-    feet_length=40;
-    
-    translate([0,0,feet_height/2]){
-        difference(){
-            union(){
-                translate([0,0,feet_height/2-5/2])
-                    cube([frame_part_width,depth,5],center = true);//Main Body
-                // Stand off feet
-                translate([0,depth/2-feet_length/2,0])
-                    cube([frame_part_width, feet_length, feet_height],center = true);
-                translate([0,-depth/2+feet_length/2,0])
-                    cube([frame_part_width, feet_length, feet_height],center = true);
-                // Rail connection point
-                translate([0,-depth/2+15/2,feet_height/2+17/2])
-                    cube([frame_part_width, 15, 17],center = true);
-                translate([0,depth/2-15/2,feet_height/2+17/2])
-                    cube([frame_part_width, 15, 17],center = true);
-                // Rail connection point bumps
-                translate([8,depth/2-15/2,feet_height/2+17])
-                    rail_connection_bump();
-                translate([-8,depth/2-15/2,feet_height/2+17])
-                    rail_connection_bump();
-                translate([8,-depth/2+15/2,feet_height/2+17])
-                    rail_connection_bump();
-                translate([-8,-depth/2+15/2,feet_height/2+17])
-                    rail_connection_bump();
-            }
-            translate([0,depth/2-feet_length/2,feet_height/2+3]) //Cutout for bolt holes
-                    cube([frame_part_width-3,35,15],center = true);
-            translate([0,-depth/2+feet_length/2,feet_height/2+3])
-                    cube([frame_part_width-3,35,15],center = true);
-            //Bolt Hole cuts
-            translate([8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
-                    bolt_hole(true);
-        translate([-8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
-                    bolt_hole(true);
-            translate([8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0])
-                    bolt_hole(true);
-        translate([-8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0]) 
-                    bolt_hole(true);
-            
-        }
-        //Bolt Hole Mounts
-        translate([8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0]) 
-                    bolt_hole();
-        translate([-8,-depth/2+2,feet_height/2+17-15.5])rotate([-90,0,0])
-                    bolt_hole();
-        translate([8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0])
-                    bolt_hole();
-        translate([-8,depth/2-2,feet_height/2+17-15.5])rotate([90,0,0]) 
-                    bolt_hole();
-    }
-    
-    
-}
-module rack_rails(){
-}
-module rack_handles(){
+module side_panel(){
+    cube([height, depth, 4], center = true);
 }
 //*******************************Rack Frame Parts Modules*************************//
 //*******************************Switch Case Modules*************************//
@@ -308,7 +378,7 @@ module make_accessories(){
         top_plate_holder();
     }
     if(accessories==4){
-        top_plate();
+        
     }
     
 }
@@ -324,6 +394,9 @@ module make_frame_parts(){
     }
     if(rack_frame_part==4){
         top_plate();
+    }
+    if(rack_frame_part==5){
+        side_panel();
     }
     
 }
