@@ -3,7 +3,7 @@ include <BOSL2/walls.scad>
 
 /* [General Rack Settings] */
 show_me=1; // [1: Rack Frame Parts, 2: Rack Accessories]
-rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Top Plate, 5: Side Panel]
+rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Rack Panel, 5: Side Panel, 6: Top Plate]
 accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Connector Plate]
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
@@ -411,6 +411,7 @@ module side_panel(){
             //Main Body
             translate([0,0,4/2])
                 cube([height, depth, 4], center = true);
+            //Sides of main body
             translate([0,depth/2+4/2,18/2])
                 cube([height, 4, 18], center = true);
             translate([0,-depth/2-4/2,18/2])
@@ -427,6 +428,32 @@ module side_panel(){
         translate([-height/2,-depth/2-4/2,4/2])rotate([0,-90,-90])
             mount_holes(4, true);
         translate([-height/2,depth/2+4/2,4/2])rotate([0,-90,-90])
+            mount_holes(4, true);
+    }
+}
+module rack_panel(){
+    difference(){
+        union(){
+            //Main Body
+            translate([0,0,4/2])
+                cube([height, (rack_width-30), 4], center = true);
+            //Sides of main body
+            translate([0,(rack_width-30)/2+15/2,4/2])
+                cube([height, 15, 4], center = true);
+            translate([0,-(rack_width-30)/2-15/2,4/2])
+                cube([height, 15, 4], center = true);
+        }
+        //Mount Holes
+        //mount_spaceing = (depth >= 200) ? 16 : 15;
+        translate([-height/2,-(rack_width-30)/2+18/2,4/2])rotate([0,0,-90])
+            for (i=[6.5:16:(rack_width-30)]){
+                translate([-i,0,0])
+                    mount_holes(4, false);
+            }
+        // Rack mount holes
+        translate([-height/2,-(rack_width-30)/2+1,4/2])rotate([0,0,-90])
+            mount_holes(4, true);
+        translate([-height/2,(rack_width-30)/2-1,4/2])rotate([0,180,-90])
             mount_holes(4, true);
     }
 }
@@ -461,10 +488,13 @@ module make_frame_parts(){
         rack_handles();
     }
     if(rack_frame_part==4){
-        top_plate();
-    }
+        rack_panel();
+    }    
     if(rack_frame_part==5){
         side_panel();
+    }
+    if(rack_frame_part==6){
+        top_plate();
     }
     
 }
