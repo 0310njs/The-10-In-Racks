@@ -17,7 +17,7 @@ component1_depth = 122.0;
 component1_height = 28.30;
 component1_side_offset = 0;  // [-100:0.1:100]
 component1_up_offset = 0;  // [-100:0.1:100]
-// when true is will turn the component on its side 90 degrees.
+// when true it will turn the component on its side 90 degrees.
 component1_90 = false; // when true turn component 90 degrees clockwise while facing it.
 // Adds small cutout a USB or Power cable could be routed through to the front
 component1_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
@@ -33,7 +33,7 @@ component2_depth = 122.0;
 component2_height = 28.30;
 component2_side_offset = 0;  // [-100:0.1:100]
 component2_up_offset = 0;  // [-100:0.1:100]
-// when true is will turn the component on its side 90 degrees.
+// when true it will turn the component on its side 90 degrees.
 component2_90 = false; // when true turn component 90 degrees clockwise while facing it.
 // Adds small cutout a USB or Power cable could be routed through to the front
 component2_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
@@ -49,7 +49,7 @@ component3_depth = 122.0;
 component3_height = 28.30;
 component3_side_offset = 0;  // [-100:0.1:100]
 component3_up_offset = 0;  // [-100:0.1:100]
-// when true is will turn the component on its side 90 degrees.
+// when true it will turn the component on its side 90 degrees.
 component3_90 = false; // when true turn component 90 degrees clockwise while facing it.
 // Adds small cutout a USB or Power cable could be routed through to the front
 component3_wire_holes=4; // [1: Both Sides, 2: Left, 3: Right, 4: disable]
@@ -145,7 +145,7 @@ module power_wire_cutouts(component_width, component_height, component_depth, co
     solid_z_offset = front_plate_hole ? 0 : front_plate_thickness;
     chassis_depth_main = component_depth + zip_tie_cutout_depth + solid_z_offset;
         
-    mid_y = component_up_offset; // Midplane of switch opening
+    mid_y = - component_up_offset; // Midplane of switch opening
     hole_spacing_x = component_width; // match rack holes
         
     if (front_wire_holes == 1 || front_wire_holes == 2){   //make left hole
@@ -226,11 +226,15 @@ module front_panel() {
         }
     }
     module component_front_cutout(component, component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes, component_wire_diameter, component_90 ){
+        
+        turn90 = component_90 ? 90 : 0;
+        
         blank_start = front_plate_hole ? 0 : front_plate_thickness/2;
         if (component < 4) {           
-            translate([component_side_offset, component_up_offset, front_plate_thickness/2 + blank_start])
+            rotate([0,0,turn90])translate([component_side_offset, - component_up_offset, front_plate_thickness/2 + blank_start])
                 cuboid([component_width + tolerance*2, component_height + tolerance*2, front_plate_thickness+1], $fn = 10);
             if (component_wire_holes < 4){
+                rotate([0,0,turn90])
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, component_wire_holes,component_wire_diameter, component_90); 
             }
         }
@@ -268,13 +272,13 @@ module component_mount(component, component_width, component_height, component_d
     chassis_depth_indented = chassis_depth_main - zip_tie_indent_depth;
     $fn = 64;
     
-    turn90 = 90;
+    turn90 = component_90 ? 90 : 0;
 
     // Create the main body as a separate module
     module body() {
         chassis_height = min(component_height + (2 * case_thickness), height);
         // Chassis body
-        translate([component_side_offset,component_up_offset, chassis_depth_main/2])
+        translate([component_side_offset,- component_up_offset, chassis_depth_main/2])
             cuboid([chassis_width, chassis_height, chassis_depth_main - front_plate_thickness], rounding = chassis_edge_radius, edges=["Z"], $fn = 20);
     }
     // component_cutout: used to create cutout with optional lip for component_mount
@@ -293,12 +297,12 @@ module component_mount(component, component_width, component_height, component_d
         
         z_start = front_plate_hole ? chassis_depth_main/2 -tolerance : chassis_depth_main/2 + front_plate_thickness;
         z_depth = front_plate_hole ? chassis_depth_main + 2*tolerance : chassis_depth_main - front_plate_thickness + tolerance;
-        translate([component_side_offset, component_up_offset, z_start]) 
+        translate([component_side_offset, - component_up_offset, z_start]) 
             cube([cutout_w, cutout_h, z_depth], center = true);
 }
     // Create zip tie holes and indents
     module shelf_type(){
-        translate([component_side_offset,- component_height + case_thickness - component_up_offset + .1, chassis_depth_main/2])
+        translate([component_side_offset, - component_height/2 - component_up_offset - e, chassis_depth_main/2])
         cube([chassis_width - (case_thickness*2-tolerance*2) ,case_thickness*2,chassis_depth_main], center = true);
     }
     module zip_tie_features() {
@@ -306,7 +310,7 @@ module component_mount(component, component_width, component_height, component_d
         zip_z = component_depth + solid_z_offset + 2.5;
         for (i = [0:zip_tie_hole_count - 1]) {
             x_pos = (component_width)/2 + component_side_offset - (component_width/(zip_tie_hole_count + 1)) * (i+1);
-            translate([x_pos, 0, zip_z]) {
+            translate([x_pos, - component_up_offset, zip_z]) {
                 cube([zip_tie_hole_width, height, zip_tie_hole_length], center = true);
             }
         }
@@ -314,11 +318,11 @@ module component_mount(component, component_width, component_height, component_d
         x_pos = component_side_offset;
         chassis_height = min(component_height + (2 * case_thickness), height);
         // Top indent
-        translate([x_pos, (- (chassis_height)/2) - component_up_offset - e, zip_z]) {
+        translate([x_pos, (- (chassis_height)/2) + - component_up_offset, zip_z]) {
             cube([component_width, zip_tie_indent_depth + e, zip_tie_cutout_depth + e], center = true);
         }
         // Bottom indent
-        translate([x_pos, ((chassis_height)/2 - zip_tie_indent_depth) + .1 - component_up_offset, zip_z]) {
+        translate([x_pos, ((chassis_height)/2) + - component_up_offset, zip_z]) {
             cube([component_width, zip_tie_indent_depth + e , zip_tie_cutout_depth + e], center = true);
         }
     }
@@ -330,7 +334,7 @@ module component_mount(component, component_width, component_height, component_d
         test_hex_fit_z = (component_depth) - ( hex_spacing + hex_bottom_frame*2);        
         
         if(air_holes && test_hex_fit_z > 0){
-            translate([component_side_offset, component_up_offset, component_depth/2]){
+            translate([component_side_offset, - component_up_offset, component_depth/2]){
                 if(test_hex_fit_x >= 0){// cut hex hole from top and bottom
                     difference(){         
                         cuboid([component_width + case_thickness*2 + e*2, component_height + case_thickness*2 + e*2, component_depth],rounding=0,edges=["Z"], $fn = 10);
@@ -351,7 +355,7 @@ module component_mount(component, component_width, component_height, component_d
     module add_lip() {
         if(front_lip){
             difference() {
-                translate([component_side_offset, component_up_offset, 0])
+                translate([component_side_offset, - component_up_offset, 0])
                     rect_tube(size=[component_width + tolerance*2,component_height + tolerance*2], wall=.6, h=.6, $fn = 10);
                 power_wire_cutouts(component_width, component_height, component_depth, component_side_offset, component_up_offset, front_wire_holes, component_wire_diameter);
             }
@@ -370,6 +374,7 @@ module component_mount(component, component_width, component_height, component_d
     // Assembly - boolean structure
     // ==============================================================
     if(component < 4){
+        rotate([0,0,turn90])
         union() {
             difference() {
                 body();
@@ -389,7 +394,6 @@ module component_mount(component, component_width, component_height, component_d
             if(component == 2){
                 add_stopper();
             }
-            
         }
     }
 }
