@@ -191,10 +191,22 @@ module claw(){
     translate([0,0,plate_width/2])rotate([0,90,0]){
         front_panel();
         translate([(hook_width/4)+(hook_rounding/2),0,-front_plate_thickness/2]){
+            if(rack_height != .5){
+                translate([0,height/2-hook_height/2,0])rotate([0,0,180])
+                    hook(); 
+            }
             translate([0,-height/2+hook_height/2,0])
                 hook();
-            translate([0,height/2-hook_height/2,0])rotate([0,0,180])
-                hook();
+        }
+        if(rack_height != .5){
+            translate([0,height/2-6.1,0])
+                cuboid([10.5, 7.5, front_plate_thickness],rounding=7.5/2,edges=["Z"]);
+        }
+        translate([0,-height/2+6.1,0])
+            cuboid([10.5, 7.5, front_plate_thickness],rounding=7.5/2,edges=["Z"]);
+        if(rack_height % 1){
+            translate([0,-height/2+7.5/2,0])
+                cuboid([17, 7.5, front_plate_thickness],rounding=7.5/2,edges=["Z"]);
         }
     }
 }
@@ -308,9 +320,9 @@ module rack_rails(){
             translate([-8,-height/2 - offset_half - add_half/2,4/2])
                 mount_holes(6, 3, true);
             if(rack_height % 1 == 0.5){
-                translate([-8,height/2 - 5.5,4/2])
+                translate([-8,height/2 - 5,4/2])
                     bolt_hole(true);
-                translate([8,height/2 - 5.5,4/2])
+                translate([8,height/2 - 5,4/2])
                     bolt_hole(true);
             }
         }
