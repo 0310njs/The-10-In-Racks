@@ -220,6 +220,17 @@ module connector_plate_doubled(){
     translate([0,-height/2+4/2,0])
         cuboid([plate_width/2+1.5, 4, front_plate_thickness], rounding=1, edges=["Z"]);
 }
+module hex_plate(){
+    if(doubled){
+        translate([8,0,0])
+            bolt_hole(false);
+        translate([-8,0,0])
+            bolt_hole(false);
+        cuboid([4, 15, 4], rounding=1, edges=["Z"]);
+    }else{
+        bolt_hole(false);
+    }
+}
 //*******************************Rack Accessories Modules*************************//
 //*******************************Rack Frame Parts Modules*************************//
 module rack_feet(){
@@ -550,7 +561,7 @@ module make_connection_parts(){
         }
     }
     if(connection_part==2){
-        
+        hex_plate();
     }
     if(connection_part==3){
         
