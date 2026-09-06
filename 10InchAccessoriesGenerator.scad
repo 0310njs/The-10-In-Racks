@@ -1,7 +1,6 @@
 include <BOSL2/std.scad>
 include <BOSL2/walls.scad>
-
-/* [General Rack Settings] */
+/* [What to generate Settings] */
 //Choose to generate a part of the frame or one of the many smaller parts call accessories.
 show_me=1; // [1: Rack Frame Parts, 2: Rack Accessories]
 //Choose which part of the frame to generate
@@ -9,6 +8,7 @@ rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Rack Pan
 //Choose which type of accessorie to generate
 accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Connection Parts]
 //Currentlly not full supported need more input from users of 6in racks.
+/* [General Rack Settings] */
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
 rack_height = 1.0; // [0.5:0.5:5]
