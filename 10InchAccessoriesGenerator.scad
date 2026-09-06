@@ -52,62 +52,65 @@ frame_part_width=32;
 //***********************************Helper Modules*********************************//
 
 // Makes mounting holes per the U size. "thickness" change to allow a long enough hole to cut the whole matterial. "slot" t/f control if the holes are round or slots.
- module mount_holes(thickness,type,cut) {
-        // Rack standard: 3 holes per U, with specific positioning
-        // Each U is 44.45mm, holes are at specific positions within each U
-        hole_spacing_x = (rack_width == 152.4) ? 136.526 : 236.525; // 6 inch : 10 inch rack
-        hole_left_x = (rack_width - hole_spacing_x) / 2;
+module mount_holes(thickness,type,cut,height_change) {
+ 
+    height = height_change;
+    // Rack standard: 3 holes per U, with specific positioning
+    // Each U is 44.45mm, holes are at specific positions within each U
+    hole_spacing_x = (rack_width == 152.4) ? 136.526 : 236.525; // 6 inch : 10 inch rack
+    hole_left_x = (rack_width - hole_spacing_x) / 2;
 
-        // 10 inch rack = 10x7mm oval
-        // 6 inch rack = 3.25 x 6.5mm oval
-        slot_len = (rack_width == 152.4) ? 6.5 : 10.0;
-        slot_height = (rack_width == 152.4) ? 3.25 : 7.0;
+    // 10 inch rack = 10x7mm oval
+    // 6 inch rack = 3.25 x 6.5mm oval
+    slot_len = (rack_width == 152.4) ? 6.5 : 10.0;
+    slot_height = (rack_width == 152.4) ? 3.25 : 7.0;
 
-        // Standard rack hole positions within each 1U (44.45mm) unit:
-        // First hole: 6.35mm from top of U
-        // Second hole: 22.225mm from top of U (middle)
-        // Third hole: 38.1mm from top of U (6.35mm from bottom)
-        u_hole_positions = [6.35, 22.225, 38.1]; // positions within each U
-        
-        // Calculate how many full and partial U units we need to consider
-        max_u = ceil(rack_height); // Include partial U units
-        
-        for (side_x = [hole_left_x]) {
-            for (u = [0:max_u-1]) {
-                for (hole_pos = u_hole_positions) {
-                    // Calculate hole position from top of entire rack
-                    hole_y = height - (u * 44.45 + hole_pos);
-                    // Always show holes that are at least partially within the rack height
-                    // Always show holes fully inside the rack
-                    fully_inside = (hole_y >= slot_height/2 && hole_y <= height - slot_height/2);
-                    // Show partial holes at edge only if half_heighc v v c  t_holes is true
-                    partially_inside = (hole_y + slot_height/2 > 0 && hole_y - slot_height/2 < height);
-                    show_hole = fully_inside || (half_height_holes && partially_inside && !fully_inside);
-                    if (show_hole) {
-                        translate([side_x, hole_y, 0]) {
-                            if(type == 1){
-                                linear_extrude(thickness + e*2,center = true, $fn = 15)
-                                    circle(d=6.5);
-                            }
-                            if(type == 2){
-                                cuboid([slot_len, slot_height, thickness + e*2],rounding=slot_height/2,edges=["Z"], $fn = 30);
-                            }
-                            if(type == 3){
-                                translate([-side_x, 0, 0])
-                                bolt_hole(cut);
-                            }
+    // Standard rack hole positions within each 1U (44.45mm) unit:
+    // First hole: 6.35mm from top of U
+    // Second hole: 22.225mm from top of U (middle)
+    // Third hole: 38.1mm from top of U (6.35mm from bottom)
+    u_hole_positions = [6.35, 22.225, 38.1]; // positions within each U
+    
+    // Calculate how many full and partial U units we need to consider
+    max_u = ceil(rack_height); // Include partial U units
+    
+    for (side_x = [hole_left_x]) {
+        for (u = [0:max_u-1]) {
+            for (hole_pos = u_hole_positions) {
+                // Calculate hole position from top of entire rack
+                hole_y = height - (u * 44.45 + hole_pos);
+                // Always show holes that are at least partially within the rack height
+                // Always show holes fully inside the rack
+                fully_inside = (hole_y >= slot_height/2 && hole_y <= height - slot_height/2);
+                // Show partial holes at edge only if half_heighc v v c  t_holes is true
+                partially_inside = (hole_y + slot_height/2 > 0 && hole_y - slot_height/2 < height);
+                show_hole = fully_inside || (half_height_holes && partially_inside && !fully_inside);
+                if (show_hole) {
+                    translate([side_x, hole_y, 0]) {
+                        if(type == 1){
+                            linear_extrude(thickness + e*2,center = true, $fn = 15)
+                                circle(d=6.5);
+                        }
+                        if(type == 2){
+                            cuboid([slot_len, slot_height, thickness + e*2],rounding=slot_height/2,edges=["Z"], $fn = 30);
+                        }
+                        if(type == 3){
+                            translate([-side_x, 0, 0])
+                            bolt_hole(cut);
                         }
                     }
                 }
             }
         }
     }
+}
 // Module used to make the mounting points with holes the will line up with the U size on the rack.
-module connector_plate(){ 
+module connector_plate(change_height, hole_type){ 
+    height = change_height;
     difference(){
         cuboid([plate_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
         translate([-plate_width/2, -height/2, 0])
-            mount_holes(front_plate_thickness,1,true); 
+            mount_holes(front_plate_thickness,hole_type,true,height); 
     }
 }
 // if cut is true bolt holt will make a bolt shape used with diffrence() to make a cut for the hole else it will make a whole bolt hole  15mmx15mmx6mm.
@@ -144,7 +147,7 @@ module hook(){
 //*******************************Rack Accessories Modules*************************//
 module tsproot(){
     translate([0,0,plate_width/2])rotate([0,90,0]){
-        connector_plate();
+        connector_plate(height, 2);
         translate([(hook_width/4)+(hook_rounding/2),0,-front_plate_thickness/2]){
             hook();
             rotate([0,0,180])
@@ -154,7 +157,7 @@ module tsproot(){
 }
 module claw(){
     translate([0,0,plate_width/2])rotate([0,90,0]){
-        connector_plate();
+        connector_plate(height, 2);
         translate([(hook_width/4)+(hook_rounding/2),0,-front_plate_thickness/2]){
             if(rack_height != .5){
                 translate([0,height/2-hook_height/2,0])rotate([0,0,180])
@@ -180,8 +183,9 @@ module top_plate_holder(){
     bridge_len=54;
     bolt_plate_width=20;
     bolt_plate_length=50;
+    height = 44.45;
     
-    connector_plate();
+    connector_plate(height, 2);
     translate([-(-plate_width+bridge_len)/2,-height/2-6,0])//bridge piece
             cuboid([bridge_len, 10, front_plate_thickness],rounding=1,edges=["Z"]);
     translate([0,-height/2,0])// connector between bridge and front panel
@@ -210,9 +214,9 @@ module top_plate_holder(){
 module connector_plate_doubled(){
     //Make the plates with holes next to each other
     translate([-plate_width/2,0,0])
-        connector_plate();
+        connector_plate(height,1);
     translate([plate_width/2,0,0])
-        connector_plate();
+        connector_plate(height,1);
     //Cover the gap at the top
     translate([0,height/2-4/2,0])
         cuboid([plate_width/2+1.5, 4, front_plate_thickness], rounding=1, edges=["Z"]);
@@ -249,10 +253,10 @@ module rack_feet(){
                 translate([0,-depth/2+feet_length/2,0])
                     cube([frame_part_width, feet_length, feet_height],center = true);
                 // Rail connection point
-                translate([0,-depth/2+15/2,feet_height/2+17/2])
-                    cube([frame_part_width, 15, 17],center = true);
-                translate([0,depth/2-15/2,feet_height/2+17/2])
-                    cube([frame_part_width, 15, 17],center = true);
+                translate([0,-depth/2+16/2,feet_height/2+17/2])
+                    cube([frame_part_width, 16, 17],center = true);
+                translate([0,depth/2-16/2,feet_height/2+17/2])
+                    cube([frame_part_width, 16, 17],center = true);
                 // Rail connection point bumps
                 translate([8,depth/2-15/2,feet_height/2+17])
                     rail_connection_bump();
@@ -305,9 +309,9 @@ module rack_rails(){
                 cube([frame_part_width,height+add_half,6],center = true);
             //Bolt Hole Cuts
             translate([8,-height/2 - offset_half - add_half/2,4/2])
-                mount_holes(6, 3, true);
+                mount_holes(6, 3, true, height);
             translate([-8,-height/2 - offset_half - add_half/2,4/2])
-                mount_holes(6, 3, true);
+                mount_holes(6, 3, true, height);
             if(rack_height % 1 == 0.5){
                 translate([-8,height/2 - 5,4/2])
                     bolt_hole(true);
@@ -471,13 +475,13 @@ module side_panel(){
         translate([-height/2,-depth/2+18/2,4/2])rotate([0,0,-90])
             for (i=[12:mount_spaceing:depth]){
                 translate([-i,0,0])
-                    mount_holes(4, 1, true);
+                    mount_holes(4, 1, true, height);
             }
         // Rack mount holes
         translate([-height/2,-depth/2-4/2,4/2])rotate([0,-90,-90])
-            mount_holes(4, 2, true);
+            mount_holes(4, 2, true, height);
         translate([-height/2,depth/2+4/2,4/2])rotate([0,-90,-90])
-            mount_holes(4, 2, true);
+            mount_holes(4, 2, true, height);
     }
 }
 module rack_panel(){
@@ -497,16 +501,42 @@ module rack_panel(){
         translate([-height/2,-(rack_width-30)/2+18/2,4/2])rotate([0,0,-90])
             for (i=[6.5:16:(rack_width-30)]){
                 translate([-i,0,0])
-                    mount_holes(4, 1, true);
+                    mount_holes(4, 1, true, height);
             }
         // Rack mount holes
         translate([-height/2,-(rack_width-30)/2+1,4/2])rotate([0,0,-90])
-            mount_holes(4, 2, true);
+            mount_holes(4, 2, true, height);
         translate([-height/2,(rack_width-30)/2-1,4/2])rotate([0,180,-90])
-            mount_holes(4, 2, true);
+            mount_holes(4, 2, true, height);
     }
 }
 module display_rack(){
+    
+    translate([rack_width/2,0,0])
+        rack_feet();
+    translate([-rack_width/2,0,0])
+        rack_feet();
+    rotate([90,0,0])translate([0,height/2+7,0]){
+        translate([-rack_width/2,25,-depth/2])
+            rack_rails();
+        translate([rack_width/2,25,-depth/2])
+            rack_rails();
+    }
+    rotate([90,0,180])translate([0,height/2+7,0]){
+        translate([-rack_width/2,25,-depth/2])
+            rack_rails();
+        translate([rack_width/2,25,-depth/2])
+            rack_rails();
+    }
+    translate([rack_width/2,0,25+height+14])
+        rack_handles();
+    translate([-rack_width/2,0,25+height+14])rotate([0,0,180])
+        rack_handles();
+    translate([0,0,front_plate_thickness/2+25+height+14+25])
+        top_plate();
+        
+    top_plate_holder();
+    
 }
 //*******************************Rack Frame Parts Modules*************************//
 //*******************************Switch Case Modules*************************//
@@ -557,7 +587,7 @@ module make_connection_parts(){
         if(doubled){
             connector_plate_doubled();
         }else{
-            connector_plate();
+            connector_plate(height, 1);
         }
     }
     if(connection_part==2){
