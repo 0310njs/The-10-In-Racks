@@ -2,9 +2,13 @@ include <BOSL2/std.scad>
 include <BOSL2/walls.scad>
 
 /* [General Rack Settings] */
+//Choose to generate a part of the frame or one of the many smaller parts call accessories.
 show_me=1; // [1: Rack Frame Parts, 2: Rack Accessories]
-rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Rack Panel, 5: Side Panel, 6: Top Plate]
-accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Connector Plate]
+//Choose which part of the frame to generate
+rack_frame_part=1; // [1: Rack Feet, 2: Rack Rails, 3: Rack Handles, 4: Rack Panel, 5: Side Panel, 6: Top Plate, 7: Display Rack]
+//Choose which type of accessorie to generate
+accessories=1; // [1: Tsprout, 2: Claw, 3: Top Plate Holder, 4: Connection Parts]
+//Currentlly not full supported need more input from users of 6in racks.
 rack_width = 254.0; // [ 254.0:10 inch, 152.4:6 inch]
 // Height of the rack in U units, can be a fraction for partial U (e.g. 1.5 for 1U plus half of the next U)
 rack_height = 1.0; // [0.5:0.5:5]
@@ -21,6 +25,13 @@ hex_strut = 4; // [1:1:14]
 hex_spacing = 15;
 // controls the thickness of the frame around the  hex cutout.
 hex_bottom_frame = 10;  // [8:1:50]
+
+/* [Connection Parts]  */
+//Choose which type of connection part to generate
+connection_part = 1; // [1: Connector Plate, 2: Hex Plate, 3: Bolt, 4: Nut]
+//Choose to make the Connector Plate or Hex Plate double instead of single.
+doubled = false;
+
 /* [Hidden] */
 height = 44.45 * rack_height;
 depth = 100 * rack_depth;
@@ -92,57 +103,11 @@ frame_part_width=32;
         }
     }
 // Module used to make the mounting points with holes the will line up with the U size on the rack.
-module front_panel(){
-    
-    // Create all rack holes
-    module all_rack_holes() {
-        // Rack standard: 3 holes per U, with specific positioning
-        // Each U is 44.45mm, holes are at specific positions within each U
-        hole_spacing_x = (rack_width == 152.4) ? 136.526 : 236.525; // 6 inch : 10 inch rack
-        hole_left_x = (rack_width - hole_spacing_x) / 2;
-
-        // 10 inch rack = 10x7mm oval
-        // 6 inch rack = 3.25 x 6.5mm oval
-        slot_len = (rack_width == 152.4) ? 6.5 : 10.0;
-        slot_height = (rack_width == 152.4) ? 3.25 : 7.0;
-
-        // Standard rack hole positions within each 1U (44.45mm) unit:
-        // First hole: 6.35mm from top of U
-        // Second hole: 22.225mm from top of U (middle)
-        // Third hole: 38.1mm from top of U (6.35mm from bottom)
-        u_hole_positions = [6.35, 22.225, 38.1]; // positions within each U
-        
-        // Calculate how many full and partial U units we need to consider
-        max_u = ceil(rack_height); // Include partial U units
-        
-        for (side_x = [hole_left_x]) {
-            for (u = [0:max_u-1]) {
-                for (hole_pos = u_hole_positions) {
-                    // Calculate hole position from top of entire rack
-                    hole_y = height - (u * 44.45 + hole_pos);
-                    // Always show holes that are at least partially within the rack height
-                    // Always show holes fully inside the rack
-                    fully_inside = (hole_y >= slot_height/2 && hole_y <= height - slot_height/2);
-                    // Show partial holes at edge only if half_heighc v v c  t_holes is true
-                    partially_inside = (hole_y + slot_height/2 > 0 && hole_y - slot_height/2 < height);
-                    show_hole = fully_inside || (half_height_holes && partially_inside && !fully_inside);
-                    if (show_hole) {
-                        translate([side_x, hole_y, 0]) {
-                            cuboid([slot_len, slot_height, front_plate_thickness + e*2],rounding=slot_height/2,edges=["Z"]);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // Making the plate
-    //====================================================================================
-    translate([-plate_width/2, -height/2, 0]){
-        difference(){
-            translate([plate_width/2, height/2, 0])
-            cuboid([plate_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
-            all_rack_holes(); 
-        }
+module connector_plate(){ 
+    difference(){
+        cuboid([plate_width, height, front_plate_thickness], rounding=4, edges=["Z"]); 
+        translate([-plate_width/2, -height/2, 0])
+            mount_holes(front_plate_thickness,1,true); 
     }
 }
 // if cut is true bolt holt will make a bolt shape used with diffrence() to make a cut for the hole else it will make a whole bolt hole  15mmx15mmx6mm.
@@ -179,7 +144,7 @@ module hook(){
 //*******************************Rack Accessories Modules*************************//
 module tsproot(){
     translate([0,0,plate_width/2])rotate([0,90,0]){
-        front_panel();
+        connector_plate();
         translate([(hook_width/4)+(hook_rounding/2),0,-front_plate_thickness/2]){
             hook();
             rotate([0,0,180])
@@ -189,7 +154,7 @@ module tsproot(){
 }
 module claw(){
     translate([0,0,plate_width/2])rotate([0,90,0]){
-        front_panel();
+        connector_plate();
         translate([(hook_width/4)+(hook_rounding/2),0,-front_plate_thickness/2]){
             if(rack_height != .5){
                 translate([0,height/2-hook_height/2,0])rotate([0,0,180])
@@ -199,10 +164,10 @@ module claw(){
                 hook();
         }
         if(rack_height != .5){
-            translate([0,height/2-6.1,0])
+            translate([0,height/2-6.3,0])
                 cuboid([10.5, 7.5, front_plate_thickness],rounding=7.5/2,edges=["Z"]);
         }
-        translate([0,-height/2+6.1,0])
+        translate([0,-height/2+6.3,0])
             cuboid([10.5, 7.5, front_plate_thickness],rounding=7.5/2,edges=["Z"]);
         if(rack_height % 1){
             translate([0,-height/2+7.5/2,0])
@@ -216,7 +181,7 @@ module top_plate_holder(){
     bolt_plate_width=20;
     bolt_plate_length=50;
     
-    front_panel();
+    connector_plate();
     translate([-(-plate_width+bridge_len)/2,-height/2-6,0])//bridge piece
             cuboid([bridge_len, 10, front_plate_thickness],rounding=1,edges=["Z"]);
     translate([0,-height/2,0])// connector between bridge and front panel
@@ -241,6 +206,19 @@ module top_plate_holder(){
             bolt_hole(true);
         }
     }
+}
+module connector_plate_doubled(){
+    //Make the plates with holes next to each other
+    translate([-plate_width/2,0,0])
+        connector_plate();
+    translate([plate_width/2,0,0])
+        connector_plate();
+    //Cover the gap at the top
+    translate([0,height/2-4/2,0])
+        cuboid([plate_width/2+1.5, 4, front_plate_thickness], rounding=1, edges=["Z"]);
+    //Cover the gap at the bottom
+    translate([0,-height/2+4/2,0])
+        cuboid([plate_width/2+1.5, 4, front_plate_thickness], rounding=1, edges=["Z"]);
 }
 //*******************************Rack Accessories Modules*************************//
 //*******************************Rack Frame Parts Modules*************************//
@@ -517,6 +495,8 @@ module rack_panel(){
             mount_holes(4, 2, true);
     }
 }
+module display_rack(){
+}
 //*******************************Rack Frame Parts Modules*************************//
 //*******************************Switch Case Modules*************************//
 module make_accessories(){
@@ -533,7 +513,7 @@ module make_accessories(){
         top_plate_holder();
     }
     if(accessories==4){
-        
+        make_connection_parts();
     }
     
 }
@@ -556,7 +536,28 @@ module make_frame_parts(){
     if(rack_frame_part==6){
         top_plate();
     }
+    if(rack_frame_part==7){
+        display_rack();
+    }
     
+}
+module make_connection_parts(){
+    if(connection_part==1){
+        if(doubled){
+            connector_plate_doubled();
+        }else{
+            connector_plate();
+        }
+    }
+    if(connection_part==2){
+        
+    }
+    if(connection_part==3){
+        
+    }
+    if(connection_part==4){
+        
+    }
 }
 //*******************************Switch Case Modules*************************//
 //*******************************Exacuted code*************************//
