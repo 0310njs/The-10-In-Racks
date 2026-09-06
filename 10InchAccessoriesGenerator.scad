@@ -227,12 +227,21 @@ module connector_plate_doubled(){
 module hex_plate(){
     if(doubled){
         translate([8,0,0])
-            bolt_hole(false);
+            intersection(){
+                cube([14,14,14],center=true);
+                bolt_hole(false);
+            }
         translate([-8,0,0])
-            bolt_hole(false);
-        cuboid([4, 15, 4], rounding=1, edges=["Z"]);
+            intersection(){
+                cube([14,14,14],center=true);
+                bolt_hole(false);
+            }
+        cube([4, 14, 4], center = true);
     }else{
-        bolt_hole(false);
+        intersection(){
+            cube([14,14,14],center=true);
+            bolt_hole(false);
+        }
     }
 }
 //*******************************Rack Accessories Modules*************************//
@@ -267,7 +276,7 @@ module rack_feet(){
                 translate([-8,-depth/2+15/2,feet_height/2+17])
                     rail_connection_bump();
             }
-            //Cutout for bolt holes
+            //Cutouts for bolt holes
             translate([0,depth/2-feet_length/2,feet_height/2+3]) 
                     cube([frame_part_width-3,35,15],center = true);
             translate([0,-depth/2+feet_length/2,feet_height/2+3])
