@@ -31,6 +31,8 @@ hex_bottom_frame = 10;  // [8:1:50]
 connection_part = 1; // [1: Connector Plate, 2: Hex Plate, 3: Bolt, 4: Nut]
 //Choose to make the Connector Plate or Hex Plate double instead of single.
 doubled = false;
+//Choose to chamfer the corners of the hex plate
+hex_chamfered = false;
 
 /* [Hidden] */
 height = 44.45 * rack_height;
@@ -225,22 +227,42 @@ module connector_plate_doubled(){
         cuboid([plate_width/2+1.5, 4, front_plate_thickness], rounding=1, edges=["Z"]);
 }
 module hex_plate(){
+    limit = 12;
     if(doubled){
-        translate([8,0,0])
-            intersection(){
-                cube([14,14,14],center=true);
-                bolt_hole(false);
+        difference(){
+            union(){
+                translate([8,0,0])
+                    intersection(){
+                        cube([limit,limit,limit],center=true);
+                        bolt_hole(false);
+                    }
+                translate([-8,0,0])
+                    intersection(){
+                        cube([limit,limit,limit],center=true);
+                        bolt_hole(false);
+                    }
+                cube([4, limit, 4], center = true);
             }
-        translate([-8,0,0])
-            intersection(){
-                cube([14,14,14],center=true);
-                bolt_hole(false);
-            }
-        cube([4, 14, 4], center = true);
+            if(hex_chamfered){
+                translate([-8.5-8,8.5,0])rotate([0,0,45])
+                    cube([limit,limit,limit],center=true);
+                translate([8.5+8,8.5,0])rotate([0,0,45])
+                    cube([limit,limit,limit],center=true);
+                }
+        }
     }else{
-        intersection(){
-            cube([14,14,14],center=true);
-            bolt_hole(false);
+        difference(){
+            intersection(){
+                
+                cube([limit,limit,limit],center=true);
+                bolt_hole(false);
+            }
+            if(hex_chamfered){
+                translate([-8.5,8.5,0])rotate([0,0,45])
+                    cube([limit,limit,limit],center=true);
+                translate([8.5,8.5,0])rotate([0,0,45])
+                    cube([limit,limit,limit],center=true);
+                }
         }
     }
 }
@@ -306,10 +328,10 @@ module rack_feet(){
     
 }
 module rack_rails(){
-    //added to the length on the rail to account for the half U
-    add_half = rack_height % 1 == 0.5 ? 8 : 0;
+    //added to the length on the rail to account for the half U and a full U?
+    add_half = rack_height % 1 == 0.5 ? 8 : 8;
     //used for postioning the mounting holes
-    offset_half = rack_height % 1 == 0.5 ? 7 : 0;
+    offset_half = rack_height % 1 == 0.5 ? 7 : -5;
     
     union(){
         difference(){
@@ -526,25 +548,29 @@ module display_rack(){
     translate([-rack_width/2,0,0])
         rack_feet();
     rotate([90,0,0])translate([0,height/2+7,0]){
-        translate([-rack_width/2,25,-depth/2])
+        translate([-rack_width/2,29,-depth/2])
             rack_rails();
-        translate([rack_width/2,25,-depth/2])
+        translate([rack_width/2,29,-depth/2])
             rack_rails();
     }
     rotate([90,0,180])translate([0,height/2+7,0]){
-        translate([-rack_width/2,25,-depth/2])
+        translate([-rack_width/2,29,-depth/2])
             rack_rails();
-        translate([rack_width/2,25,-depth/2])
+        translate([rack_width/2,29,-depth/2])
             rack_rails();
     }
-    translate([rack_width/2,0,25+height+14])
+    translate([rack_width/2,0,33+height+14])
         rack_handles();
-    translate([-rack_width/2,0,25+height+14])rotate([0,0,180])
+    translate([-rack_width/2,0,33+height+14])rotate([0,0,180])
         rack_handles();
-    translate([0,0,front_plate_thickness/2+25+height+14+25])
+    translate([0,0,front_plate_thickness/2+height+73])
         top_plate();
-        
-    top_plate_holder();
+    
+    translate([rack_width/2+8,-depth/2-front_plate_thickness/2,front_plate_thickness/2+29+height+15.5])rotate([-90,0,0]){
+        top_plate_holder();
+        translate([-rack_width-16,0,0])mirror([1,0,0])
+        top_plate_holder();
+        }
     
 }
 //*******************************Rack Frame Parts Modules*************************//
